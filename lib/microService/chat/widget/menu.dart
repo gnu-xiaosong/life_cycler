@@ -5,6 +5,8 @@ import 'package:app_template/microService/chat/widget/AddUser.dart';
 import 'package:app_template/microService/chat/widget/CreateGroup.dart';
 import 'package:app_template/microService/chat/widget/Scan.dart';
 
+import 'AddUserQr.dart';
+
 List menus = <Map>[
   {
     "menu": PopUpMenuItem(
@@ -58,6 +60,20 @@ List menus = <Map>[
         MaterialPageRoute<void>(
           builder: (BuildContext context) {
             return const AddUser();
+          },
+        ),
+      );
+    }
+  },
+  {
+    "menu": PopUpMenuItem(
+        title: 'QR'.tr(),
+        image: const Icon(Icons.qr_code, color: Colors.white)),
+    "click": (BuildContext context) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) {
+            return const AddUserQr();
           },
         ),
       );

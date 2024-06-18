@@ -6,11 +6,13 @@
  * @Description: 全局管理器工具类
  */
 import 'dart:convert';
+import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 //应用配置信息
 import '../database/LocalStorage.dart';
 import '../microService/chat/websocket/model/ClientObject.dart';
+import '../microService/chat/websocket/model/OffLineMessageQueue.dart';
 import '../microService/chat/websocket/schedule/UserSchedule.dart';
 import '../models/index.dart';
 //HttpManager管理工具类
@@ -33,6 +35,10 @@ class GlobalManager {
   static LocalDatabase database = LocalDatabase();
   // 4.websocketChatObject list
   static List<ClientObject> webscoketClientObjectList = [];
+  // 5.全局离线消息队列初始初
+  static OffLineMessageQueue offLineMessageQueue = OffLineMessageQueue();
+  // 6.去全局设置server在线client MessageQueue map: 用于client端使用: 页面client面向该编程即可
+  static Map<String, MessageQueue> userMapMsgQueue = Map();
 
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 

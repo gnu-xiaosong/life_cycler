@@ -133,10 +133,10 @@ client**端**
 
 ```json
 {
-"type": "SCAN", 
- "info":{
-     "msg": "scan server task!"
- }
+	"type": "SCAN",
+	"info": {
+		"msg": "scan server task!"
+	}
 }
 ```
 
@@ -144,12 +144,11 @@ server端
 
 ```json
 {
-"type": "SCAN", 
-    "info":{
-        "code": 200, 
-"msg": "I am server for websocket!"
-    }
-
+	"type": "SCAN",
+	"info": {
+		"code": 200,
+		"msg": "I am server for websocket!"
+	}
 }
 ```
 
@@ -162,37 +161,40 @@ server端
 client端
 
 ```json
- {
- "type": "auth",
-     "info":{
-          "plait_text": "vsdvsbvsavsdvdxbdbdxbfdbsbvdfbd",
- "key": "this is auth key for encode"，
- "encrypte": "sjkvsbkjdvbsdjvhbsjhvbdsjhvbsdjhvbsdjhvbsdvjs"
-     }
-
- }
+{
+	"type": "AUTH",
+	"deviceId": "设备唯一性id",
+	"info": {
+		"plait_text": "vsdvsbvsavsdvdxbdbdxbfdbsbvdfbd",
+		"key": "this is auth key for encode"，
+        "encrypte": "sjkvsbkjdvbsdjvhbsjhvbdsjhvbsdjhvbsdjhvbsdvjs"
+	}
+}
 ```
 
 server端返回
 
 ```json
 {
-"type": "AUTH",
-    "info":{
-      "code": "300", // 200 for successful !
-"msg": "this websocket client auth is not pass!"  
-    }
+	"type": "AUTH",
+	"info": {
+		"code": "300",
+		// 200 for successful !
+		"msg": "this websocket client auth is not pass!"
+	}
 }
 
 成功
 {
-    "type": "AUTH",
-    "info":{
-          "code": "200", // 代表成功
-    "secret": secret, //通信秘钥
-    "msg": "this websocket client auth is  pass!"  
-    }
-};
+	"type": "AUTH",
+	"info": {
+		"code": "200",
+		// 代表成功
+		"secret": secret,
+		//通信秘钥
+		"msg": "this websocket client auth is  pass!"
+	}
+}
 ```
 
 ##### 通讯方式：Queue队列存储形式
@@ -203,50 +205,79 @@ server端返回
 
 ```json
 {
-    "type": "SECRET",
-    "info":{
-            "code": 400,
-    "msg": "secret is not pass!"
-    }
-
-};
+	"type": "SECRET",
+	"info": {
+		"code": 400,
+		"msg": "secret is not pass!"
+	}
+}
 ```
 
 通用消息
 
 ```json
 {
-  "type": "message",          // 消息类型，如 message, join, leave, typing, etc.
-   "info":{
-       "secret": "通讯秘钥", // 第一次认证成功后server端返回存储在client端的
-         "sender": {
-    "id": "user123",          // 发送者的唯一标识符
-    "username": "Alice",      // 发送者用户名
-    "avatar": "avatar.jpg"    // 发送者头像（可选）
-  },
-  "recipient": {
-    "id": "all",              // 接收者的唯一标识符，可以是 all 表示广播给所有用户
-    "type": "group"           // 接收者类型，例如 group 表示群组消息，user 表示私聊消息
-  },
-  "content": {
-    "text": "Hello, World!",  // 文本消息内容
-    "attachments": [          // 附件列表，如图片、文件等（可选）
-      {
-        "type": "image",
-        "url": "https://example.com/image.jpg",
-        "name": "image.jpg"
-      }
-    ]
-  },
-  "timestamp": "2024-06-14T15:30:00Z", // 消息发送时间戳
-  "metadata": {
-    "messageId": "msg123",    // 消息的唯一标识符
-    "status": "sent"          // 消息状态，例如 sent, delivered, read
-  }
-   }
-
+	"type": "MESSAGE",
+	// 消息类型，如 message, join, leave, typing, etc.
+	"info": {
+		"sender": {
+			"id": "user123",// 设备唯一标识
+			// 发送者的唯一标识符
+			"username": "Alice",
+			// 发送者用户名
+			"avatar": "avatar.jpg" // 发送者头像（可选）
+		},
+		"recipient": {
+			"id": "all", // 设备唯一标识
+			// 接收者的唯一标识符，可以是 all 表示广播给所有用户
+			"type": "group" // 接收者类型，例如 group 表示群组消息，user 表示私聊消息
+		},
+		"content": {
+			"text": "Hello, World!",
+			// 文本消息内容
+			"attachments": [ // 附件列表，如图片、文件等（可选）
+			{
+				"type": "image",
+				"url": "https://example.com/image.jpg",
+				"name": "image.jpg"
+			}]
+		},
+		"timestamp": "2024-06-14T15:30:00Z",
+		// 消息发送时间戳
+		"metadata": {
+			"messageId": "msg123",
+			// 消息的唯一标识符
+			"status": "sent" // 消息状态，例如 sent, delivered, read
+		}
+	}
 }
 ```
+
+##### 请求在线客户端client
+
+client端发起请求
+
+```
+{
+	"type": "REQUEST_INLINE_CLIENT",
+	"info": {
+		"deviceId": "",
+		//请求客户端的设备唯一性id
+	}
+}
+```
+
+server端响应
+
+```
+
+```
+
+
+
+
+
+
 
 ##### server消息任务调度设计
 
@@ -258,6 +289,22 @@ server端返回
 * **纵向(消息调度)**：单个client客户端消息队列设计，一般采用时间先后顺序。
 
 创新调度方法：采用人工智能调度
+
+##### 总消息队列设计
+
+* **在线client消息队列**
+* **离线client消息队列**
+
+> 根据message所标识的接受者信息[这里采用设备的唯一id作为依据]选择其对应clientObject对象，
+> 这里有个策略选择：如果接受者处于断线状态怎么处理，如下策略解决，推荐策略1，这里选择权交给用户，用户自行选择策略
+> 策略1: 采用建立一个离线状态信息的循环队列用于被动发送/主动发送，这里最好的策略为在用户连接成功server端后调用该循环信息队列,这会增加server端的存储压力
+>   策略2:采用互信机制，只能在双方都处于在线状态时才能进行通讯，
+
+关于离线消息队列两个核心点：
+
+* 未在在线clientObject中找到的消息clientObject**是否进入离校消息队列**中
+* **是否开启离线消息队列**，这里采用策略被动触发离线消息队列处理机制
+
 
 
 
@@ -283,3 +330,13 @@ server端返回
 
 ## 开发日志
 2024.6.9 初始化项目，添加微服务及目录microService,和聊天微服务chatService
+
+
+
+**任务提示**
+
+![image-20240616050100819](project/README/image-20240616050100819.png)
+
+![image-20240616050250259](project/README/image-20240616050250259.png)
+
+**优化的点**：client检测server可采用先验证ip存在性，在测试websocket连接，因为ip分配一般都是顺序性分配的

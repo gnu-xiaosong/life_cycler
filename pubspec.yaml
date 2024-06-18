@@ -109,6 +109,10 @@ dependencies:
   json_cache: ^3.0.1
   encryptor: ^0.0.1
   encrypt: ^5.0.3
+  web_socket_client: ^0.1.0
+  chalkdart: ^2.2.1
+  uuid: ^3.0.6
+  pretty_qr_code: 2.0.3
 
 
 

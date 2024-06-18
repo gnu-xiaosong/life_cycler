@@ -9,6 +9,10 @@ class Users extends Table {
   /// 自动增量的用户ID，唯一标识用户
   IntColumn get id => integer().autoIncrement()();
 
+  /// 设备唯一id
+  TextColumn get deviceId =>
+      text().withLength(min: 1, max: 50).customConstraint('NOT NULL UNIQUE')();
+
   /// 用户名，要求唯一且长度在1到50之间
   TextColumn get username =>
       text().withLength(min: 1, max: 50).customConstraint('NOT NULL UNIQUE')();

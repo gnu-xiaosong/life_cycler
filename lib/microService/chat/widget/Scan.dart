@@ -1,7 +1,4 @@
-import 'dart:async';
-import 'dart:typed_data';
-
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 

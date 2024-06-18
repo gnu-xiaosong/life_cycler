@@ -5,6 +5,9 @@ import 'dart:io';
 import 'MessageQueue.dart';
 
 class ClientObject {
+  // 唯一标识client客户端基于设备的ID
+  String deviceId;
+
   // client websocket
   WebSocket socket;
 
@@ -31,6 +34,7 @@ class ClientObject {
 
   // 构造函数
   ClientObject({
+    required this.deviceId,
     required this.socket,
     required this.ip,
     required this.port,

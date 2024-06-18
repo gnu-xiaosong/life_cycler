@@ -2,13 +2,16 @@
  针对不同消息类型进行处理
  */
 import 'package:app_template/manager/GlobalManager.dart';
+import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
+import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'MessageEncrypte.dart';
 
-class ClientMessageHandlerByType {
+class ClientMessageHandlerByType extends Tool with Console {
+  MessageEncrypte messageEncrypte = MessageEncrypte();
   // 消息类型
   late Map msgDataTypeMap;
 
@@ -18,14 +21,14 @@ class ClientMessageHandlerByType {
     if (msgDataTypeMap["type"] == "SCAN") {
       // 解密info字段
       msgDataTypeMap["info"] =
-          MessageEncrypte.decodeAuth(msgDataTypeMap["info"]);
+          messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
       // 处理该类型的返回
       scan(channel);
     } else if (msgDataTypeMap["type"] == "AUTH") {
       // 解密info字段
       msgDataTypeMap["info"] =
-          MessageEncrypte.decodeAuth(msgDataTypeMap["info"]);
-      print("解密结果:$msgDataTypeMap");
+          messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
+      printInfo("解密结果:$msgDataTypeMap");
 
       // 客户端client 第一次请求认证服务端server
       auth(channel);
@@ -33,13 +36,21 @@ class ClientMessageHandlerByType {
       // 从缓存中取出secret 通讯秘钥
       String? secret = GlobalManager.appCache.getString("chat_secret");
       // 解密info字段
-      msgDataTypeMap["info"] = MessageEncrypte.decodeMessage(
+      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
           secret!, msgDataTypeMap["info"].toString());
       // 为消息类型
       message();
+    } else if (msgDataTypeMap["type"] == "REQUEST_INLINE_CLIENT") {
+      // 从缓存中取出secret 通讯秘钥
+      String? secret = GlobalManager.appCache.getString("chat_secret");
+      // 解密info字段
+      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
+          secret!, msgDataTypeMap["info"].toString());
+      // 处理在线client
+      requestInlineClient();
     } else {
       // 为表示消息类型: 明文传输
-      print("为标识消息类型");
+      printWarn("为标识消息类型");
       other();
     }
   }
@@ -49,20 +60,21 @@ class ClientMessageHandlerByType {
    */
   void scan(WebSocketChannel? channel) {
     // 打印消息
-    print("--------------SCAN TASK RESULT--------------------");
-    print(msgDataTypeMap.toString());
+    printInfo("--------------SCAN TASK HANDLER--------------------");
+    printTable(msgDataTypeMap);
     try {
       if (int.parse(msgDataTypeMap["info"]["code"]) == 200) {
         // 扫描成功
-        print("INFO: ${msgDataTypeMap["info"]["msg"]}");
+        printSuccess("INFO: ${msgDataTypeMap["info"]["msg"]}");
       } else {
         // 扫描失败
-        print("FAILURE: ${msgDataTypeMap["info"]["msg"]}");
+        printFaile("FAILURE: ${msgDataTypeMap["info"]["msg"]}");
       }
     } catch (e) {
-      print("ERR:${e.toString()}");
       // 非法字段
-      print("the server is not authen! this conn will interrupt!");
+      printCatch(
+          "ERR:the server is not authen! this conn will interrupt!more detail: ${e.toString()}");
+
       channel!.sink.close(status.goingAway);
     }
 
@@ -74,26 +86,26 @@ class ClientMessageHandlerByType {
    */
   void auth(WebSocketChannel? channel) {
     // 打印消息
-    print("--------------AUTH TASK RESULT--------------------");
-    print(msgDataTypeMap.toString());
+    printInfo("--------------AUTH TASK HANDLER--------------------");
+    printInfo(">> receive: $msgDataTypeMap");
+
     try {
       if (int.parse(msgDataTypeMap["info"]["code"]) == 200) {
         // 认证成功
-        print("INFO: ${msgDataTypeMap["info"]["msg"]}");
+        printSuccess("+INFO: ${msgDataTypeMap["info"]["msg"]}");
         // 存储通讯秘钥secret
         String secret = msgDataTypeMap["info"]["secret"].toString();
         GlobalManager.appCache.setString("chat_secret", secret);
       } else {
         // 扫描失败
-        print("FAILURE: ${msgDataTypeMap["info"]["msg"]}");
+        printFaile("-FAILURE: ${msgDataTypeMap["info"]["msg"]}");
       }
     } catch (e) {
-      print("ERR:${e.toString()}");
       // 非法字段
-      print("the server is not authed! this conn will interrupt!");
+      printCatch(
+          "-ERR: ${e.toString()} server is not authed! this conn will interrupt!");
       channel!.sink.close(status.goingAway);
     }
-
     //************************其他处理: 记录日志等******************************
   }
 
@@ -101,9 +113,26 @@ class ClientMessageHandlerByType {
     消息类型
    */
   void message() {
+    printInfo("--------------MESSAGE TASK HANDLER--------------------");
     // 调用消息处理函数
     handlerMessgae(msgDataTypeMap);
     //***********************Message Type  Handler*******************************
+  }
+
+  /*
+   处理server在线client用户
+   */
+  void requestInlineClient() {
+    // 1.获取deviceId 列表
+    List<String> deviceIdList = msgDataTypeMap["info"]["deviceId"];
+    // 2.将其存入缓存中
+    GlobalManager.appCache.setStringList("deviceId_list", deviceIdList);
+    // 3.创建为每个clientObject对象，采用list存储
+    deviceIdList.map((deviceId) {
+      // 为每个deviceId设置一个全局的消息队列
+      GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
+    });
+    printInfo("userMapMsgQueue:$GlobalManager.userMapMsgQueue");
   }
 
   /*

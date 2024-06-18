@@ -10,13 +10,10 @@ class UserSchedule {
   static UserSchedule? _instance;
 
   // 索引index，用于获取用户client
-  static int index = 0;
+  int index = 0;
 
   // 私有构造函数
   UserSchedule._();
-
-  // 存储 WebsocketClientObject 对象的数组
-  List<ClientObject> clientObjectList = GlobalManager.webscoketClientObjectList;
 
   // 获取单例实例
   static UserSchedule getInstance() {
@@ -28,30 +25,25 @@ class UserSchedule {
    * 获取下一个 WebsocketClientObject
    */
   ClientObject? getNextClientObject() {
+    print("debug: ${GlobalManager.webscoketClientObjectList.length}");
     // 获取横向客户端index:选取策略
-    if (clientObjectList.isEmpty) {
+    if (GlobalManager.webscoketClientObjectList.length == 0) {
       print("无在线client");
       return null;
     }
 
     // 获取对象client
-    ClientObject clientObject = clientObjectList[index];
-    // 执行调度策略
+    ClientObject clientObject = GlobalManager.webscoketClientObjectList[index];
+    // 执行调度策略:index+1
     clientScheduleStrategyByOrder();
-    // 假设获取第一个元素作为下一个对象
-    if (messageQueueIsNull(clientObject)) return null;
 
     return clientObject;
   }
 
   // 调度user client的策略1: 逐步自增
   void clientScheduleStrategyByOrder() {
-    if (index++ == (clientObjectList.length - 1)) index = 0;
-  }
-
-  // 判断空队列消息检测
-  bool messageQueueIsNull(ClientObject clientObject) {
-    if (clientObject.messageQueue.length == 0) return true;
-    return false;
+    if (index++ == (GlobalManager.webscoketClientObjectList.length - 1))
+      index = 0;
+    print("index=$index");
   }
 }

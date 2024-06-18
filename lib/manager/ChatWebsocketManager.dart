@@ -11,20 +11,28 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:app_template/config/AppConfig.dart';
 import 'package:app_template/manager/GlobalManager.dart';
+import 'package:app_template/manager/TestManager.dart';
+import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.dart';
 import 'package:lan_scanner/lan_scanner.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import '../microService/chat/websocket/Client.dart';
 import '../microService/chat/websocket/Server.dart';
-import '../microService/chat/websocket/common/MessageEncrypte.dart';
+import '../microService/chat/websocket/common/Console.dart';
 
-class ChatWebsocketManager {
+class ChatWebsocketManager with Console {
+  MessageEncrypte messageEncrypte = MessageEncrypte();
+
+  // websocket server instance
+  ChatWebsocketServer? chatWebsocketServer;
   // 静态属性，存储唯一实例
   static ChatWebsocketManager? _instance;
   /*
     选择本机为服务器端还是客户端策略
    */
   // IP地址
-  InternetAddress? server_ip = InternetAddress.anyIPv4;
+  InternetAddress? server_ip;
+  String _ip = "";
+
   // 端口port
   final int port = AppConfig.port;
   bool result = true; // 是否作为服务端
@@ -35,7 +43,7 @@ class ChatWebsocketManager {
   // 私有的命名构造函数，确保外部不能实例化该类
   ChatWebsocketManager._internal() {
     // 初始化逻辑
-    print("-------chatWebsocket instance-----");
+    // printInfo("-------chatWebsocket instance-----");
   }
 
   // 提供一个静态方法来获取实例
@@ -50,53 +58,42 @@ class ChatWebsocketManager {
       //设置
       await GlobalManager.appCache.setString("server_ip", "192.168.1.1");
     }
-
-    // 获取缓存中的server_ip进行连接性测试
-    //转化地址
-    // 将字符 IP 地址转换为 InternetAddress 对象
-    try {
-      String? ipString = GlobalManager.appCache.getString("server_ip");
-      print("待转换ip: $ipString");
-      InternetAddress server_ip = InternetAddress(ipString!);
-      print("转换成功: ${server_ip.address}");
-    } catch (e) {
-      print("转换失败: $e");
-      exit(0);
-    }
-
+    // 获取ip
+    _ip = GlobalManager.appCache.getString("server_ip")!;
     // 存在server_进行连接性测试
-    bool isConnected =
-        await testConnection("${server_ip.toString()}", AppConfig.port);
+    bool isConnected = await testConnection(_ip, AppConfig.port);
 
+    // printInfo("--------isConnected=$isConnected---------------");
     if (isConnected) {
+      printSuccess("server检测成功: ${_ip.toString()}:$port");
       // 检测连接成功
       result = false;
     } else {
       // 1. 获取子网
       // 192.168.0.1
       var wifiIP = await NetworkInfo().getWifiIP();
-      print("本机: $wifiIP");
+
       // 192.168.0
       var subnet = ipToCSubnet(wifiIP!);
-      print("子网ip:$subnet");
-
+      printInfo("本机: $wifiIP 子网ip:$subnet");
       // 2. 进行连接性测试: 策略为ip+端口连接检测
       int i = 1;
       while (result && i != limitPort) {
-        print("测试地址: $subnet.$i:${AppConfig.port}");
-        bool isConnected = await testConnection("$subnet.$i", AppConfig.port);
+        printInfo("测试地址: $subnet.$i:${AppConfig.port}");
+        _ip = "$subnet.$i";
+        bool isConnected = await testConnection(_ip, AppConfig.port);
         if (isConnected) {
           // 服务端ip
-          server_ip = InternetAddress("$subnet.$i");
-          print('连接成功！');
+          server_ip = InternetAddress(_ip);
+
+          printSuccess("server检测成功: ${_ip}:$port");
           result = false;
 
           // 存储server的ip地址，备下次直接使用
-          await GlobalManager.appCache
-              .setString("server_ip", server_ip.toString());
+          await GlobalManager.appCache.setString("server_ip", _ip.toString());
           break;
         } else {
-          print('连接失败。');
+          printFaile("${_ip.toString()}:$port   连接失败!");
         }
         i++;
       }
@@ -111,78 +108,76 @@ class ChatWebsocketManager {
     启动websocket服务
    */
   void bootWebsocket() async {
-    print("子线程启动!");
     // 1.判断是否作为server端
     bool isServer = await selectLocalHostAsServerStrategy();
 
-    print("--------isServer-----------");
     // 2.启动对用的socket
     if (isServer) {
       // 启动server
       // 实例化WebSocketServer
-      ChatWebsocketServer chatWebsocketServer = ChatWebsocketServer();
-      chatWebsocketServer.ip = AppConfig.ip;
-      chatWebsocketServer.port = AppConfig.port;
+      chatWebsocketServer = ChatWebsocketServer();
+      chatWebsocketServer?.ip = AppConfig.ip;
+      chatWebsocketServer?.port = AppConfig.port;
       // 启动server
-      chatWebsocketServer.start();
+      chatWebsocketServer?.start();
       // 将是否是server的结果发送回主线程
-      print("启动server成功!");
+      printSuccess("启动server成功!");
     } else {
       // 启动client
       ChatWebsocketClient chatWebsocketClient = ChatWebsocketClient();
-      chatWebsocketClient.ip = server_ip;
+      chatWebsocketClient.ip = _ip;
       chatWebsocketClient.port = AppConfig.port;
       // 连接
-      chatWebsocketClient.connnect();
-      // 将是否是server的结果发送回主线程
-      print("启动client成功!");
+      try {
+        chatWebsocketClient.connnect();
+        // 将是否是server的结果发送回主线程
+        printSuccess("启动client成功!");
+      } catch (e) {
+        printCatch("启动client失败!more detail:$e");
+      }
+      // 测试
+      TestManager.shellChatTest(chatWebsocketClient.send);
     }
   }
 
   Future<bool> testConnection(String ipAddress, int port) async {
     try {
-      RawDatagramSocket socket =
-          await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      // socket.timeout(Duration(seconds: 1)); // 设置超时时间为1秒钟
-
-      Completer<bool> completer = Completer<bool>();
-
-      // 发送一个UDP数据包给目标地址和端口
-      Map req = {
-        "type": "SCAN",
-        "info": {"code": 200, "msg": "scan server for websocket"}
-      };
-      // 加密
-      req["info"] = MessageEncrypte.encodeAuth(req["info"]);
-
-      await socket.send(utf8.encode(req["info"].toString()),
-          InternetAddress(ipAddress), port);
-
-      // 监听来自目标地址的响应
-      socket.listen((RawSocketEvent event) async {
-        if (event == RawSocketEvent.read) {
-          print("有数据监听");
-          Datagram? datagram = await socket.receive();
-          if (datagram != null) {
-            print(
-                '收到来自 ${datagram.address.address}:${datagram.port} 的响应: ${utf8.decode(datagram.data)}');
-            completer.complete(true); // 表示连接成功
-          }
+      // 尝试连接到指定的IP和端口
+      final socket =
+          await Socket.connect(ipAddress, port, timeout: Duration(seconds: 1));
+      // 发送消息
+      socket.listen((event) {
+        // 接收到服务器的数据
+        String response = utf8.decode(event); // 将字节数组转换为字符串
+        // 解密数据
+        Map re = json.decode(response);
+        if (re["type"] == "SCAN") {
+          // 验证正确:关闭
+          socket.destroy();
+          printInfo("已关闭SCAN连接");
         }
+      }, onError: (error) {
+        printError('Error: $error');
+      }, onDone: () {
+        printInfo('SCAN Connection closed!');
+        socket.destroy(); // 关闭连接
       });
 
-      // 等待超时
-      await Future.delayed(Duration(seconds: 1));
+      // 发送消息
+      Map req = {
+        "type": "SCAN",
+        "info": {"msg": "scan server task!"}
+      };
 
-      // 如果未收到响应，则连接失败
-      if (!completer.isCompleted) {
-        print('连接超时，未收到响应');
-        completer.complete(false);
-      }
+      // 加密
+      req["info"] = messageEncrypte.encodeAuth(req["info"]);
+      // 发送
+      socket.write(json.encode(req));
 
-      return completer.future;
+      return true;
     } catch (e) {
-      print('连接测试失败: $e');
+      // 如果连接失败，打印错误信息并返回false
+      printCatch('test  connect disinterrupt: $e');
       return false;
     }
   }

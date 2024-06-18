@@ -3,19 +3,18 @@
  */
 import 'dart:convert';
 
-import 'package:easy_localization/easy_localization.dart';
+import 'package:app_template/microService/chat/websocket/common/Console.dart';
 
-class TextEncryption {
-  static String encrypt(String key, String text) {
+class TextEncryption with Console {
+  String encrypt(String key, String text) {
     // return text;
     // 进行Base64编码
     String encodedString = base64Encode(utf8.encode(text));
     String encryptedText = encodedString + key;
-    print('Encoded string: $encryptedText');
     return encryptedText;
   }
 
-  static String decrypt(String key, String encryptedText) {
+  String decrypt(String key, String encryptedText) {
     // return encryptedText;
     // 去除key
     String stringWithoutLast32 =
@@ -24,13 +23,12 @@ class TextEncryption {
     // 进行Base64解码
     List<int> decodedBytes = base64Decode(stringWithoutLast32);
     String decodedString = utf8.decode(decodedBytes);
-    print('Decoded string: $decodedString');
     return decodedString;
   }
 }
 
-class TextEncryptionForJson {
-  static String encrypt(String text, int shift, String key) {
+class TextEncryptionForJson with Console {
+  String encrypt(String text, int shift, String key) {
     String combinedText = '$text$key';
     String encodedText = base64Encode(utf8.encode(combinedText));
     String encryptedText = '';
@@ -49,7 +47,7 @@ class TextEncryptionForJson {
     return encryptedText;
   }
 
-  static String decrypt(String encryptedText, int shift, String key) {
+  String decrypt(String encryptedText, int shift, String key) {
     String decodedTextWithoutKey = "";
     try {
       String decodedText = '';
@@ -70,8 +68,7 @@ class TextEncryptionForJson {
       decodedTextWithoutKey =
           utf8.decode(base64.decode(decodedText)).replaceAll(key, '');
     } catch (e) {
-      print("错误信息:${e.toString()}");
-      print(">>decrypt: 未识别加密字符!");
+      printCatch("错误信息:未识别加密字符! ${e.toString()}");
     }
 
     return decodedTextWithoutKey;

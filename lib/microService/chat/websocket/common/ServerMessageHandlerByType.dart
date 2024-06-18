@@ -1,14 +1,20 @@
 /*
  针对不同消息类型进行处理
  */
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:app_template/microService/chat/websocket/common/secret.dart';
+import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import '../../../../manager/GlobalManager.dart';
 import '../model/ClientObject.dart';
 import 'MessageEncrypte.dart';
+import 'OffLineHandler.dart';
 
-class ServerMessageHandlerByType {
+class ServerMessageHandlerByType with Console {
+  Tool tool = Tool();
+  MessageEncrypte messageEncrypte = MessageEncrypte();
   // 消息类型
   late Map msgDataTypeMap;
 
@@ -18,7 +24,7 @@ class ServerMessageHandlerByType {
     if (msgDataTypeMap["type"] == "SCAN") {
       // 解密info字段
       msgDataTypeMap["info"] =
-          MessageEncrypte.decodeAuth(msgDataTypeMap["info"]);
+          messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
       // 客户端请求局域网内服务端server的请求
       scan(request, webSocket);
     } else if (msgDataTypeMap["type"] == "AUTH") {
@@ -29,25 +35,37 @@ class ServerMessageHandlerByType {
       //***************************************************************
       // 解密info字段
       msgDataTypeMap["info"] =
-          MessageEncrypte.decodeAuth(msgDataTypeMap["info"]);
-      print("解密结果:$msgDataTypeMap");
+          messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
+      printInfo("解密结果:$msgDataTypeMap");
 
       // 客户端client 第一次请求认证服务端server
       auth(request, webSocket);
+
+      // 认证成功被动触发一次离线消息队列处理
+      OffLine offLine = OffLine();
+      offLine.offLineHandler();
     } else if (msgDataTypeMap["type"] == "MESSAGE") {
       // 获取websoket对应的ClientObject对象
       ClientObject clientObject = getClientObject(request, webSocket);
 
       // 解密info字段
-      msgDataTypeMap["info"] = MessageEncrypte.decodeMessage(
+      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
           clientObject.secret, msgDataTypeMap["info"]);
       // 为消息类型
       message(request, webSocket);
+    } else if (msgDataTypeMap["type"] == "REQUEST_INLINE_CLIENT") {
+      // 获取websoket对应的ClientObject对象
+      ClientObject clientObject = getClientObject(request, webSocket);
+      //请求在线客户端client
+      // 解密info字段
+      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
+          clientObject.secret, msgDataTypeMap["info"]);
+      // 请求在线用户
+      requestInlineClient(request, webSocket);
     } else {
       // 未标识消息类型
-      print("未识别消息类型: ${msgDataTypeMap.toString()}");
+      printWarn("未识别消息类型: ${msgDataTypeMap.toString()}");
     }
-    //***********************Message Type  Handler*******************************
   }
 
   /*
@@ -64,12 +82,12 @@ class ServerMessageHandlerByType {
       "info": {"code": 200, "msg": "I am server for websocket!"}
     };
 
-    print("有主机: $clientIp:$clientPort 扫描本机!");
+    printInfo("有主机: $clientIp:$clientPort 扫描本机!");
     // 算法加密:采用auth加解密算法
-    re["info"] = MessageEncrypte.encodeAuth(re["info"]);
+    re["info"] = messageEncrypte.encodeAuth(re["info"]);
 
     // 发送消息给client
-    webSocket.add(re.toString());
+    webSocket.add(json.encode(re));
     // 主动关闭连接
     webSocket.close();
   }
@@ -83,10 +101,10 @@ class ServerMessageHandlerByType {
     var clientPort = request.connectionInfo?.remotePort;
 
     // 1. client认证
-    Map clientAuthResult = MessageEncrypte.clientAuth(msgDataTypeMap);
+    Map clientAuthResult = messageEncrypte.clientInitAuth(msgDataTypeMap);
 
-    print("----------------AUTH认证------------------");
-    print(clientAuthResult);
+    printInfo("----------------AUTH认证------------------");
+    // printInfo(clientAuthResult);
 
     if (clientAuthResult["result"]) {
       // 加密组合
@@ -96,10 +114,12 @@ class ServerMessageHandlerByType {
       String secret = encrypte(data_encry);
       // 2.1 如果认证成功则封装该client为WebsocketClientObject并添加进全局list
       ClientObject client = ClientObject(
-          socket: webSocket,
-          ip: clientIp.toString(),
-          secret: secret,
-          port: clientPort!.toInt());
+        deviceId: msgDataTypeMap["deviceId"],
+        socket: webSocket,
+        ip: clientIp.toString(),
+        secret: secret,
+        port: clientPort!.toInt(),
+      );
 
       // 添加进lsit中
       GlobalManager.webscoketClientObjectList.add(client);
@@ -114,10 +134,12 @@ class ServerMessageHandlerByType {
         }
       };
       // 消息加密: 认证类的message的key为空
-      re["info"] = MessageEncrypte.encodeAuth(re["info"]);
+      re["info"] = messageEncrypte.encodeAuth(re["info"]);
+      printInfo("-----------------测试点-------------------------");
+      // print(re);
       // 项该client发送认证成功
-      webSocket.add(re.toString());
-      print(
+      webSocket.add(json.encode(re));
+      printSuccess(
           'Client connected: IP = $clientIp, Port = $clientPort is connect successful!');
     } else {
       // 2.2.不通过client认证，则返回错误消息
@@ -126,23 +148,11 @@ class ServerMessageHandlerByType {
         "info": {"code": "300", "msg": clientAuthResult["msg"]}
       };
       // 消息加密: 认证类的message的key为空
-      re["info"] = MessageEncrypte.encodeAuth(re["info"]);
+      re["info"] = messageEncrypte.encodeAuth(re["info"]);
       // 项该client发送认证失败消息
-      webSocket.add(re.toString());
+      webSocket.add(json.encode(re));
       // 主动断开该client的连接
       webSocket.close();
-    }
-  }
-
-  /*
-  客户端client通信秘钥认证
-   */
-  bool clientAuth(String secret, HttpRequest request, WebSocket webSocket) {
-    ClientObject clientObject = getClientObject(request, webSocket);
-    if (secret == clientObject.secret) {
-      return true;
-    } else {
-      return false;
     }
   }
 
@@ -150,9 +160,9 @@ class ServerMessageHandlerByType {
     消息类型
    */
   void message(HttpRequest request, WebSocket webSocket) {
-    // 1.客户端身份验证
-    bool secret_auth =
-        clientAuth(msgDataTypeMap["info"]["secret"], request, webSocket);
+    // 1.客户端身份验证: deviceId为发送者的设备id
+    bool secret_auth = tool.clientAuth(
+        msgDataTypeMap["info"]["sender"]["id"], request, webSocket);
 
     if (secret_auth) {
       // 2.如果认证成功，将该消息添加进client的消息队列中
@@ -160,9 +170,10 @@ class ServerMessageHandlerByType {
         if (websocketClientObj.socket == webSocket ||
             request.connectionInfo?.remoteAddress.address ==
                 websocketClientObj.ip) {
-          print("----------------中断处理：找到了目标websocket------------------------");
+          printInfo(
+              "----------------中断处理：找到了目标websocket------------------------");
           // 算法加密
-          msgDataTypeMap["info"] = MessageEncrypte.encodeMessage(
+          msgDataTypeMap["info"] = messageEncrypte.encodeMessage(
               websocketClientObj.secret, msgDataTypeMap["info"]);
           //添加新消息进入消息队列中
           websocketClientObj.messageQueue.enqueue(msgDataTypeMap);
@@ -180,9 +191,11 @@ class ServerMessageHandlerByType {
         "info": {"code": 400, "msg": "secret is not pass!"}
       };
       // 加密消息:采用auth加密
-      re["info"] = MessageEncrypte.encodeAuth(re["info"]);
+      re["info"] = messageEncrypte.encodeAuth(re["info"]);
+
+      printSuccess(">> send:$re");
       // 发送
-      webSocket.add(re.toString());
+      webSocket.add(json.encode(re));
       // 3.2 主动关闭该不信任的client客户端
       webSocket.close();
       // 3.3 更改该client的状态
@@ -190,7 +203,8 @@ class ServerMessageHandlerByType {
         if (websocketClientObj.socket == webSocket ||
             request.connectionInfo?.remoteAddress.address ==
                 websocketClientObj.ip) {
-          print("----------------中断处理：找到了目标websocket------------------------");
+          printInfo(
+              "----------------中断处理：找到了目标websocket------------------------");
           //找到了该webSocket,更改属性: 3 为被ban状态
           websocketClientObj.status = 3;
           // 返回
@@ -200,6 +214,56 @@ class ServerMessageHandlerByType {
           return websocketClientObj;
         }
       });
+    }
+  }
+
+  /*
+   请求server在线client用户
+   */
+  void requestInlineClient(HttpRequest request, WebSocket webSocket) {
+    String deviceId = msgDataTypeMap["info"]["deviceId"];
+    // 1.客户端身份验证
+    bool _auth = tool.clientAuth(deviceId, request, webSocket);
+
+    if (_auth) {
+      // 认证成功
+      // 1. 根据deviceId获取在线client的deviceId
+      List inlineDeviceId = tool.getInlineClient(deviceId);
+      // 2.根据deviceId获取接收方clientObject
+      ClientObject? clientObject = tool.getClientObjectByDeviceId(deviceId);
+      // 3.封装消息
+      Map re = {
+        "type": "REQUEST_INLINE_CLIENT",
+        "info": {"deviceId": inlineDeviceId}
+      };
+      // 4.加密
+      re["info"] = MessageEncrypte()
+          .encodeMessage(clientObject!.secret, json.encode(re["info"]));
+      // 5.发送
+      try {
+        printInfo("-----REQUEST_INLINE_CLIENT------");
+        clientObject.socket.add(json.encode(re));
+      } catch (e) {
+        printCatch("转发REQUEST_INLINE_CLIENT 消息给client失败, more detail: $e");
+      }
+    } else {
+      // 3.1 认证失败返回数据相应给客户端
+      Map re = {
+        "type": "AUTH",
+        "info": {
+          "code": 500, //代表ip+ip验证失败
+          "msg":
+              "REQUEST_INLINE_CLIENT: this client for ip or port is  in pass for auth !"
+        }
+      };
+      // 加密消息:采用auth加密
+      re["info"] = messageEncrypte.encodeAuth(re["info"]);
+
+      printSuccess(">> send:$re");
+      // 发送
+      webSocket.add(json.encode(re));
+      // 3.2 主动关闭该不信任的client客户端
+      webSocket.close();
     }
   }
 

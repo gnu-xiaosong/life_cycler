@@ -25,6 +25,7 @@ class ChatWebsocketIsolateManager {
    */
   // IP地址
   InternetAddress? server_ip = InternetAddress.anyIPv4;
+  String _ip = "";
   // 端口port
   final int port = AppConfig.port;
   bool result = true; // 是否作为服务端
@@ -51,25 +52,12 @@ class ChatWebsocketIsolateManager {
       await GlobalManager.appCache.setString("server_ip", "192.168.1.1");
     }
 
-    // 获取缓存中的server_ip进行连接性测试
-    //转化地址
-    // 将字符 IP 地址转换为 InternetAddress 对象
-    try {
-      String? ipString = GlobalManager.appCache.getString("server_ip");
-      sendPort.send("待转换ip: $ipString");
-      InternetAddress server_ip = InternetAddress(ipString!);
-      sendPort.send("转换成功: ${server_ip.address}");
-    } catch (e) {
-      sendPort.send("转换失败: $e");
-      // 关闭线程并重启
-      sendPort.send("close");
-      // exit(0);
-    }
+    _ip = GlobalManager.appCache.getString("server_ip")!;
 
     // 存在server_进行连接性测试
-    bool isConnected =
-        await testConnection("${server_ip.toString()}", AppConfig.port);
+    bool isConnected = await testConnection(_ip, AppConfig.port);
 
+    print("----------isConnected=$isConnected---------------------------");
     if (isConnected) {
       // 检测连接成功
       result = false;
@@ -90,13 +78,12 @@ class ChatWebsocketIsolateManager {
         bool isConnected = await testConnection("$subnet.$i", AppConfig.port);
         if (isConnected) {
           // 服务端ip
-          server_ip = InternetAddress("$subnet.$i");
+          _ip = "$subnet.$i";
           sendPort.send('连接成功！');
           result = false;
 
           // 存储server的ip地址，备下次直接使用
-          await GlobalManager.appCache
-              .setString("server_ip", server_ip.toString());
+          await GlobalManager.appCache.setString("server_ip", _ip.toString());
           break;
         } else {
           sendPort.send('连接失败。');
@@ -151,7 +138,7 @@ class ChatWebsocketIsolateManager {
     } else {
       // 启动client
       ChatWebsocketClient chatWebsocketClient = ChatWebsocketClient();
-      chatWebsocketClient.ip = server_ip;
+      chatWebsocketClient.ip = _ip;
       chatWebsocketClient.port = AppConfig.port;
       // 连接
       chatWebsocketClient.connnect();
@@ -162,39 +149,14 @@ class ChatWebsocketIsolateManager {
 
   Future<bool> testConnection(String ipAddress, int port) async {
     try {
-      RawDatagramSocket socket =
-          await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      socket.timeout(Duration(seconds: 1)); // 设置超时时间为1秒钟
-
-      Completer<bool> completer = Completer<bool>();
-
-      // 发送一个UDP数据包给目标地址和端口
-      await socket.send(utf8.encode('ping'), InternetAddress(ipAddress), port);
-
-      // 监听来自目标地址的响应
-      socket.listen((RawSocketEvent event) async {
-        if (event == RawSocketEvent.read) {
-          Datagram? datagram = await socket.receive();
-          if (datagram != null) {
-            print(
-                '收到来自 ${datagram.address.address}:${datagram.port} 的响应: ${utf8.decode(datagram.data)}');
-            completer.complete(true); // 表示连接成功
-          }
-        }
-      });
-
-      // 等待超时
-      await Future.delayed(Duration(seconds: 1));
-
-      // 如果未收到响应，则连接失败
-      if (!completer.isCompleted) {
-        print('连接超时，未收到响应');
-        completer.complete(false);
-      }
-
-      return completer.future;
+      // 尝试连接到指定的IP和端口
+      final socket =
+          await Socket.connect(ipAddress, port, timeout: Duration(seconds: 1));
+      socket.destroy(); // 成功连接后关闭套接字
+      return true;
     } catch (e) {
-      print('连接测试失败: $e');
+      // 如果连接失败，打印错误信息并返回false
+      print('Failed to connect: $e');
       return false;
     }
   }

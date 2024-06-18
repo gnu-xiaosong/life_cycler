@@ -25,7 +25,7 @@ class WebSocketServer {
   // websocket server启动
   Future<void> start() async {
     // 绑定ip和端口
-    _server = await HttpServer.bind(ip, port);
+    _server = await HttpServer.bind(ip, port, shared: true);
     print(
         "server>> WebSocket server running on ${_server.address}:${_server.port}");
 
@@ -44,21 +44,25 @@ class WebSocketServer {
   // 处理websocket client客户端的请求
   void _handleWebSocket(HttpRequest request) async {
     WebSocket webSocket = await WebSocketTransformer.upgrade(request);
-    print('server>> WebSocket client connected.');
+    print(
+        '+INFO: WebSocket client connected from ip=${request.connectionInfo?.remoteAddress} port=${request.connectionInfo?.remotePort}');
     // 连接成功添加进列表中
     _clients.add(webSocket);
 
     // 监听消息
     webSocket.listen((message) {
-      print('server>> Received message: $message');
+      // print("-------------测试点-----------------");
+      // print(message);
+      // print('server>> Received message: $message');
       // ***************监听消息并处理**************
       this.messageHandler(request, webSocket, message);
       //****************监听消息并处理**************
     }, onDone: () {
       // websocket连接中断
-      print('server>> WebSocket client disconnected.');
+      print(
+          '+INFO: WebSocket client disconnected from ip=${request.connectionInfo?.remoteAddress} port=${request.connectionInfo?.remotePort}');
       // ***************连接中断**************
-      this.interruptHandler(webSocket);
+      this.interruptHandler(request, webSocket);
       //****************连接中断**************
       // 移除当前中断的websocket
       _clients.remove(webSocket);
@@ -79,14 +83,16 @@ class WebSocketServer {
     // broadcast('$message');
   }
 
-  void interruptHandler(WebSocket webSocket) {
+  void interruptHandler(HttpRequest request, WebSocket webSocket) {
     /*
       desc: 对于连接中断的处理操作,用户继承该类并重写该方法来实现
       parameters:
           webSocket  WebSocket  中断的WebSocket
      */
 
-    print("$webSocket is interrupted !");
+    print(
+        '+INFO: WebSocket client disconnected from ip=${request.connectionInfo?.remoteAddress} port=${request.connectionInfo?.remotePort}');
+    ;
   }
 
   // 处理普通http请求

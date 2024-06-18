@@ -5,6 +5,8 @@
  * @LastEditTime: 2023-12-29 13:40:14
  * @Description: 测试工具类
  */
+import 'dart:io';
+
 import 'package:app_template/database/LocalStorage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +15,7 @@ import '../database/daos/UserDao.dart';
 class TestManager {
   // 公共调试函数
   static void debug() {
+    print("------------------debug task test-----------");
     // 调试ADO
     testADO();
   }
@@ -26,29 +29,41 @@ class TestManager {
     print("返回数据: ${response?.data}");
   }
 
+  // 客户端chat命令式输入
+  static void shellChatTest(Function send) {
+    while (true) {
+      // 获取用户输入
+    }
+  }
+
   // sqlite数据库调试
   static Future<void> testADO() async {
-    print("---------------数据库ADO测试-----------");
-    // userCompanion 辅助器
-    UsersCompanion usersCompanion = UsersCompanion.insert(
-        username: "小S",
-        email: "13145002201@qq.com",
-        passwordHash: "cgsucgvsdhsdhfjsdbfjdsf");
+    try {
+      print("---------------数据库ADO测试-----------");
+      // userCompanion 辅助器
+      UsersCompanion usersCompanion = UsersCompanion.insert(
+          username: "小S",
+          email: "13145002201@qq.com",
+          passwordHash: "cgsucgvsdhsdhfjsdbfjdsf",
+          deviceId: '12255555');
 
-    print(usersCompanion.toString());
-    print("----------------插入操作------------");
-    // 插入数据
-    var result = UserDao.insertUser(usersCompanion);
-    print("插入操作: $result");
-    // 查询操作测试
-    final queryData = await UserDao.selectUserByPage(1, 10);
-    print("----------------查询操作------------");
-    for (var element in queryData) {
-      if (kDebugMode) {
-        print(element);
+      print(usersCompanion.toString());
+      print("----------------插入操作------------");
+      // 插入数据
+      var result = UserDao.insertUser(usersCompanion);
+      print("插入操作: $result");
+      // 查询操作测试
+      final queryData = await UserDao.selectUserByPage(1, 10);
+      print("----------------查询操作------------");
+      for (var element in queryData) {
+        if (kDebugMode) {
+          print(element);
+        }
       }
+      print("---------------test 查询操作---------------");
+      print(queryData);
+    } catch (e) {
+      print("-EXCEPT: $e");
     }
-    print("---------------test 查询操作---------------");
-    print(queryData);
   }
 }

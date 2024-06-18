@@ -17,6 +17,16 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _deviceIdMeta =
+      const VerificationMeta('deviceId');
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+      'device_id', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL UNIQUE');
   static const VerificationMeta _usernameMeta =
       const VerificationMeta('username');
   @override
@@ -72,6 +82,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   @override
   List<GeneratedColumn> get $columns => [
         id,
+        deviceId,
         username,
         email,
         passwordHash,
@@ -92,6 +103,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(_deviceIdMeta,
+          deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta));
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
     }
     if (data.containsKey('username')) {
       context.handle(_usernameMeta,
@@ -142,6 +159,8 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     return User(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      deviceId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}device_id'])!,
       username: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}username'])!,
       email: attachedDatabase.typeMapping
@@ -169,6 +188,9 @@ class User extends DataClass implements Insertable<User> {
   /// 自动增量的用户ID，唯一标识用户
   final int id;
 
+  /// 设备唯一id
+  final String deviceId;
+
   /// 用户名，要求唯一且长度在1到50之间
   final String username;
 
@@ -191,6 +213,7 @@ class User extends DataClass implements Insertable<User> {
   final int? status;
   const User(
       {required this.id,
+      required this.deviceId,
       required this.username,
       required this.email,
       required this.passwordHash,
@@ -202,6 +225,7 @@ class User extends DataClass implements Insertable<User> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['device_id'] = Variable<String>(deviceId);
     map['username'] = Variable<String>(username);
     map['email'] = Variable<String>(email);
     map['password_hash'] = Variable<String>(passwordHash);
@@ -219,6 +243,7 @@ class User extends DataClass implements Insertable<User> {
   UsersCompanion toCompanion(bool nullToAbsent) {
     return UsersCompanion(
       id: Value(id),
+      deviceId: Value(deviceId),
       username: Value(username),
       email: Value(email),
       passwordHash: Value(passwordHash),
@@ -237,6 +262,7 @@ class User extends DataClass implements Insertable<User> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return User(
       id: serializer.fromJson<int>(json['id']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
       username: serializer.fromJson<String>(json['username']),
       email: serializer.fromJson<String>(json['email']),
       passwordHash: serializer.fromJson<String>(json['passwordHash']),
@@ -251,6 +277,7 @@ class User extends DataClass implements Insertable<User> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'deviceId': serializer.toJson<String>(deviceId),
       'username': serializer.toJson<String>(username),
       'email': serializer.toJson<String>(email),
       'passwordHash': serializer.toJson<String>(passwordHash),
@@ -263,6 +290,7 @@ class User extends DataClass implements Insertable<User> {
 
   User copyWith(
           {int? id,
+          String? deviceId,
           String? username,
           String? email,
           String? passwordHash,
@@ -272,6 +300,7 @@ class User extends DataClass implements Insertable<User> {
           Value<int?> status = const Value.absent()}) =>
       User(
         id: id ?? this.id,
+        deviceId: deviceId ?? this.deviceId,
         username: username ?? this.username,
         email: email ?? this.email,
         passwordHash: passwordHash ?? this.passwordHash,
@@ -285,6 +314,7 @@ class User extends DataClass implements Insertable<User> {
   String toString() {
     return (StringBuffer('User(')
           ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
           ..write('username: $username, ')
           ..write('email: $email, ')
           ..write('passwordHash: $passwordHash, ')
@@ -297,13 +327,14 @@ class User extends DataClass implements Insertable<User> {
   }
 
   @override
-  int get hashCode => Object.hash(id, username, email, passwordHash, createdAt,
-      updatedAt, profilePicture, status);
+  int get hashCode => Object.hash(id, deviceId, username, email, passwordHash,
+      createdAt, updatedAt, profilePicture, status);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is User &&
           other.id == this.id &&
+          other.deviceId == this.deviceId &&
           other.username == this.username &&
           other.email == this.email &&
           other.passwordHash == this.passwordHash &&
@@ -315,6 +346,7 @@ class User extends DataClass implements Insertable<User> {
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> id;
+  final Value<String> deviceId;
   final Value<String> username;
   final Value<String> email;
   final Value<String> passwordHash;
@@ -324,6 +356,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<int?> status;
   const UsersCompanion({
     this.id = const Value.absent(),
+    this.deviceId = const Value.absent(),
     this.username = const Value.absent(),
     this.email = const Value.absent(),
     this.passwordHash = const Value.absent(),
@@ -334,6 +367,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
+    required String deviceId,
     required String username,
     required String email,
     required String passwordHash,
@@ -341,11 +375,13 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.updatedAt = const Value.absent(),
     this.profilePicture = const Value.absent(),
     this.status = const Value.absent(),
-  })  : username = Value(username),
+  })  : deviceId = Value(deviceId),
+        username = Value(username),
         email = Value(email),
         passwordHash = Value(passwordHash);
   static Insertable<User> custom({
     Expression<int>? id,
+    Expression<String>? deviceId,
     Expression<String>? username,
     Expression<String>? email,
     Expression<String>? passwordHash,
@@ -356,6 +392,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (deviceId != null) 'device_id': deviceId,
       if (username != null) 'username': username,
       if (email != null) 'email': email,
       if (passwordHash != null) 'password_hash': passwordHash,
@@ -368,6 +405,7 @@ class UsersCompanion extends UpdateCompanion<User> {
 
   UsersCompanion copyWith(
       {Value<int>? id,
+      Value<String>? deviceId,
       Value<String>? username,
       Value<String>? email,
       Value<String>? passwordHash,
@@ -377,6 +415,7 @@ class UsersCompanion extends UpdateCompanion<User> {
       Value<int?>? status}) {
     return UsersCompanion(
       id: id ?? this.id,
+      deviceId: deviceId ?? this.deviceId,
       username: username ?? this.username,
       email: email ?? this.email,
       passwordHash: passwordHash ?? this.passwordHash,
@@ -392,6 +431,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
     }
     if (username.present) {
       map['username'] = Variable<String>(username.value);
@@ -421,6 +463,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   String toString() {
     return (StringBuffer('UsersCompanion(')
           ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
           ..write('username: $username, ')
           ..write('email: $email, ')
           ..write('passwordHash: $passwordHash, ')
