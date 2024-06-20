@@ -284,6 +284,30 @@ server端响应
 
 
 
+- 消息json设计
+
+  ```json
+   {
+       "type": "REQUEST_SCAN_ADD_USER",
+       "info": {
+           // 发送方：扫码方
+           "sender": {"id": send_deviceId, "username": qr_map["username"]},
+           // 接收方: 等待接受
+           "recipient": {"id": qr_map["deviceId"], "username": AppConfig.username},
+           // 留言
+           "content": qr_map["msg"] // 这个字段不是二维码扫描出的，而是用户自定义加上去的
+       }
+   }
+  ```
+
+  
+
+
+
+
+
+
+
 
 
 ##### server消息任务调度设计
@@ -300,7 +324,7 @@ server端响应
 ##### 总消息队列设计
 
 * **在线client消息队列**
-* **离线client消息队列**
+* **离线client消息队列**：负责各类的离线信息调度，进入其消息队列的**msg的info字段已进行加密处理**
 
 > 根据message所标识的接受者信息[这里采用设备的唯一id作为依据]选择其对应clientObject对象，
 > 这里有个策略选择：如果接受者处于断线状态怎么处理，如下策略解决，推荐策略1，这里选择权交给用户，用户自行选择策略
@@ -311,6 +335,35 @@ server端响应
 
 * 未在在线clientObject中找到的消息clientObject**是否进入离校消息队列**中
 * **是否开启离线消息队列**，这里采用策略被动触发离线消息队列处理机制
+
+##### 进入离线消息队列msg需要满足的字段条件：
+
+```json
+ {
+     "type":"",
+     "info":{
+         // 接收者
+         "recipient":{
+             "id":"设备唯一性ID"
+             .......
+         },
+         ........
+     }
+ }
+```
+
+##### 离线消息加密设计：两道加密防护
+
+
+
+- 第一道：内存加密存储防护，自定义秘钥为key为该机的唯一性设备标识符作为加密秘钥key
+- 第二道：传输解密防护,双方互信生成的秘钥key
+
+![image-20240620143709304](project/README/image-20240620143709304.png)
+
+
+
+
 
 
 

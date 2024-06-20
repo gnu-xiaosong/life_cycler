@@ -102,7 +102,7 @@ class _CustomScanAddDialogState extends State<CustomScanAddDialog> {
               children: [
                 TextButton.icon(
                   onPressed: () {
-                    // Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                     // 取消时清除文本框
                     widget.controler_scan.start();
                   },
@@ -128,7 +128,7 @@ class _CustomScanAddDialogState extends State<CustomScanAddDialog> {
                     };
                     print("msg: $qrMap");
                     Scan().addChatUserByScan(qrMap);
-                    // Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                   },
                   icon: Icon(Icons.add, color: Colors.white),
                   label: Text(

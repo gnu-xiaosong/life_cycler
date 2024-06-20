@@ -1,76 +1,40 @@
 /*
   离线消息队列处理类: 客户端
  */
-
-import 'dart:convert';
-
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
-import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.dart';
-import 'package:app_template/microService/chat/websocket/common/tools.dart';
-import 'package:app_template/microService/chat/websocket/model/ClientObject.dart';
+import 'package:app_template/microService/chat/websocket/common/OffLineHandler.dart';
 
 class WaitAgreeUserAddClientHandler with Console {
   // 等待好友申请消息队列开关:
   bool isWaitAgreeUserAdd = true;
 
   // 将消息进入等待好友申请队列中
-  bool enAgreeUserAddQueue(Map data) {
+  bool enAgreeUserAddQueue(String sendDeviceId, Map enMsgMap) {
+    /*
+    参数说明:data  Map
+    sendDeviceId  string 发送者设备唯一性id
+    enMsgMap   map    待发送消息  已加密
+         必要字段:
+          {
+             "type":"",
+             "info":{
+                   "recipient":{
+                      "id":"设备唯一性ID"
+                      .......
+                   },
+                   ........
+              }
+          }
+     */
     // 进入等待好友申请消息队列中
     try {
-      GlobalManager.waitAgreeUserAddClientQueue.enqueue(data);
-      printCatch("msg进入等待好友申请消息队列成功! data=$data");
+      OffLine().enOffLineQueue(sendDeviceId, enMsgMap);
+      printSuccess("msg进入等待好友申请消息队列成功! data=$enMsgMap");
       return true;
     } catch (e) {
       printCatch("msg进入等待好友申请消息队列失败!, more detail: $e");
       return false;
-    }
-  }
-
-  // 执行离线消息队列
-  void offLineHandler() {
-    int length = GlobalManager.offLineMessageQueue.length;
-
-    while (length-- > 0) {
-      // 获取当前出队列msg
-      Map? msg = GlobalManager.offLineMessageQueue.dequeue();
-
-      // **********切换secret进行文本的加密**********
-      String deviceId = msg?["deviceId"]; // 仅仅离线模式才有该字段,发送者
-      String secret = msg?["secret"]; // 仅仅离线模式才有该字段，发送者
-
-      // 解密
-      Map? de_map =
-          MessageEncrypte().decodeMessage(secret, msg!["msg_map"]["info"]);
-
-      // 2.加密:
-      /// (1) 获取目标(接收信息者)的deviceId
-      String receive_deviceId = de_map?["recipient"]["id"];
-
-      /// (2) 根据device获取clientObject对象
-      ClientObject? receive_clientObject =
-          Tool().getClientObjectByDeviceId(receive_deviceId);
-
-      if (receive_clientObject == null) {
-        // 如果接受者仍然不在线则将该消息重新添加进队列中
-        GlobalManager.offLineMessageQueue.enqueue(msg);
-      } else {
-        /// (3) 根据发送者的secret加密文本
-        Map reEncode_map = MessageEncrypte().encodeMessage(
-            receive_clientObject!.secret, de_map as Map<String, dynamic>);
-
-        // 利用接受者clientObject发送消息
-        try {
-          // 封装新信息
-          Map new_msg = {"type": msg["msg_map"]["type"], "info": reEncode_map};
-          receive_clientObject.socket.add(json.encode(new_msg));
-        } catch (e) {
-          printCatch("离线消息队列发送失败！失败device_id=$deviceId, more detail: $e");
-        }
-      }
-    }
-    if (length == 0) {
-      printInfo(" 离线消息队列为空!");
     }
   }
 }

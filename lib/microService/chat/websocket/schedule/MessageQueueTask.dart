@@ -25,7 +25,7 @@ class MessageQueueTask with Console {
   }
 
   // 执行一次webscoket serverbus消息队列任务调度一次
-  void execOnceWebsocketServerMessageBusQueueScheduleTask() {
+  Future<void> execOnceWebsocketServerMessageBusQueueScheduleTask() async {
     // 单例模式: 实例化 busSchedule
     // BusSchedule busSchedule = BusSchedule();
 
@@ -77,8 +77,9 @@ class MessageQueueTask with Console {
         if (receive_clientObject == null ||
             receive_clientObject.connected == false) {
           // 接收者处于离线状态: 将消息append进入离线消息队列中
-          if (OffLine().enOffLineQueue(
-              clientObject.deviceId, clientObject.secret, msg_map)) ;
+          if (await OffLine().enOffLineQueue(clientObject.deviceId, msg_map)) {
+            printInfo("data=$msg_map  进入离线消息队列successful!");
+          }
         } else {
           if (receive_clientObject.status == 1) {
             // 4.加密消息

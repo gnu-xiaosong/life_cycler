@@ -8,6 +8,7 @@ import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:app_template/microService/chat/websocket/model/ClientObject.dart';
 
 class OffLine with Console {
@@ -15,22 +16,48 @@ class OffLine with Console {
   bool isOffLine = true;
 
   // 将消息进入离线消息队列中
-  bool enOffLineQueue(String deviceId, String send_secret, Map message) {
+  Future<bool> enOffLineQueue(String deviceId, Map message) async {
     /*
-       deviceId      deviceId,
-       secret      send_secret,  都是发送者
-      message   Map     加密数据
+    参数说明:data  Map
+    deviceId  string 发送者设备唯一性id
+    msg_map   map    待发送消息  已加密
+         必要字段:
+          {
+             "type":"",
+             "info":{
+                   "recipient":{
+                      "id":"设备唯一性ID"
+                      .......
+                   },
+                   ........
+              }
+          }
      */
-    // 封装离线消息队列Map
-    Map offMessage = {
-      "deviceId": deviceId,
-      "secret": send_secret,
-      "msg_map": message
-    };
     // 进入离线消息队列中
     try {
-      GlobalManager.offLineMessageQueue.enqueue(offMessage);
-      return true;
+      // 获取clientObject
+      ClientObject? sendClientObject =
+          Tool().getClientObjectByDeviceId(deviceId);
+      print("sender:$deviceId");
+      if (sendClientObject != null) {
+        // 解密
+        message["info"] = MessageEncrypte()
+            .decodeMessage(sendClientObject!.secret, message["info"]);
+
+        // 内存存储加密
+        String key = await UniqueDeviceId.getDeviceUuid();
+        message["info"] = MessageEncrypte().encodeMessage(key, message["info"]);
+
+        // 封装离线消息队列Map
+        Map offMessage = {"deviceId": deviceId, "msg_map": message};
+
+        GlobalManager.offLineMessageQueue.enqueue(offMessage);
+        return true;
+      } else {
+        // 未发现sender clientObject
+        printError("发生程序性错误!未发现sender clientObject!");
+        return false;
+      }
     } catch (e) {
       printCatch(" msg进入离线消息队列失败!, more detail: $e");
       return false;
@@ -38,22 +65,26 @@ class OffLine with Console {
   }
 
   // 执行离线消息队列
-  void offLineHandler() {
+  Future<void> offLineHandler() async {
+    printInfo("---------Handler Offline Message Queue----------");
     int length = GlobalManager.offLineMessageQueue.length;
 
     while (length-- > 0) {
+      printInfo("msg index=$length");
       // 获取当前出队列msg
       Map? msg = GlobalManager.offLineMessageQueue.dequeue();
+      printInfo("Offline Msg Type: ${msg?['type']}");
 
       // **********切换secret进行文本的加密**********
       String deviceId = msg?["deviceId"]; // 仅仅离线模式才有该字段,发送者
-      String secret = msg?["secret"]; // 仅仅离线模式才有该字段，发送者
+      String secret = await UniqueDeviceId.getDeviceUuid(); // 仅仅离线模式才有该字段，发送者
 
-      // 解密
+      // 第一道防护解密: 存储解密
       Map? de_map =
           MessageEncrypte().decodeMessage(secret, msg!["msg_map"]["info"]);
 
-      // 2.加密:
+      printInfo("Content msg: $de_map");
+      // 2.第二道防护:加密,通讯秘钥加密
       /// (1) 获取目标(接收信息者)的deviceId
       String receive_deviceId = de_map?["recipient"]["id"];
 

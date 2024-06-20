@@ -55,6 +55,7 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
+      printInfo(msgDataTypeMap);
       // 处理在线client
       scanQrAddUser();
     } else {

@@ -7,10 +7,12 @@ import 'dart:io';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:app_template/microService/chat/websocket/common/secret.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import '../../../../manager/GlobalManager.dart';
 import '../model/ClientObject.dart';
 import 'MessageEncrypte.dart';
 import 'OffLineHandler.dart';
+import 'WaitAgreeUserAddClientHandler.dart';
 
 class ServerMessageHandlerByType with Console {
   Tool tool = Tool();
@@ -40,10 +42,6 @@ class ServerMessageHandlerByType with Console {
 
       // 客户端client 第一次请求认证服务端server
       auth(request, webSocket);
-
-      // 认证成功被动触发一次离线消息队列处理
-      OffLine offLine = OffLine();
-      offLine.offLineHandler();
     } else if (msgDataTypeMap["type"] == "MESSAGE") {
       // 获取websoket对应的ClientObject对象
       ClientObject clientObject = getClientObject(request, webSocket);
@@ -84,9 +82,12 @@ class ServerMessageHandlerByType with Console {
   /*
    用于扫码添加好友
    */
-  void responseScanAddUser(HttpRequest request, WebSocket webSocket) {
+  Future<void> responseScanAddUser(
+      HttpRequest request, WebSocket webSocket) async {
     // 接收方deviceId
     String recive_deviceId = msgDataTypeMap["info"]["recipient"]["id"] ?? "";
+    // 发送者
+    String send_deviceId = msgDataTypeMap["info"]["sender"]["id"] ?? "";
 
     // 根据deviceId获取clientObject
     ClientObject? receive_clientObject =
@@ -95,29 +96,27 @@ class ServerMessageHandlerByType with Console {
     /// 1.封装数据
     Map send_data = msgDataTypeMap;
 
-    print(send_data);
-
     // 判断对方是否在线
     if (receive_clientObject == null) {
       //***************************待测试需要找第三个设备: 存在bug******************
-      print("对方不在线");
+      printInfo("对方不在线");
 
-      /// 2.加密数据
-      send_data["info"] = MessageEncrypte()
-          .encodeMessage(receive_clientObject!.secret, send_data["info"]);
-      // 发送者
-      String send_deviceId = msgDataTypeMap["info"]["sender"]["id"] ?? "";
-      ClientObject? send_clientObject =
-          tool.getClientObjectByDeviceId(send_deviceId);
-      // 利用sender方加密信息
-      send_data["info"] = MessageEncrypte()
-          .encodeMessage(send_clientObject!.secret, send_data["info"]);
-      // 不在线，进入离线消息队列等待： send_data已加密数据
+      /// 2.第一道防护存储加密: 获取接收方的通讯秘钥
+      String key = await UniqueDeviceId.getDeviceUuid();
+      send_data["info"] =
+          MessageEncrypte().encodeMessage(key, send_data["info"]);
+
+      // 不在线，进入离线消息队列等待： 利用设备生成的设备唯一性ID作为key进行加密数据
       printWarn(
           "because receiver is offline for REQUEST_SCAN_ADD_USER,so the msg data enter the offLineMessageQueue");
-      OffLine offLine = OffLine();
-      offLine.enOffLineQueue(send_deviceId, send_clientObject!.secret,
-          send_data); // send_data已加密，发送方加密
+      // 进入离线消息队列
+      WaitAgreeUserAddClientHandler waitAgreeUserAddClientHandler =
+          WaitAgreeUserAddClientHandler();
+      if (waitAgreeUserAddClientHandler.isWaitAgreeUserAdd) {
+        waitAgreeUserAddClientHandler.enAgreeUserAddQueue(
+            send_deviceId, send_data); // 利用设备生成的设备唯一性ID作为key进行加密数据
+      }
+      printSuccess("msg alreaded to the AgreeUserAddQueue!");
     } else {
       //***************************待测试需要找第三个设备******************
       // 在线直接发起add user请求
@@ -175,6 +174,7 @@ class ServerMessageHandlerByType with Console {
     // printInfo(clientAuthResult);
 
     if (clientAuthResult["result"]) {
+      // 通过认证
       // 加密组合
       String data_encry = clientIp.toString() +
           clientPort.toString() +
@@ -189,7 +189,7 @@ class ServerMessageHandlerByType with Console {
         port: clientPort!.toInt(),
       );
 
-      // 添加进lsit中
+      // 添加进list中
       GlobalManager.webscoketClientObjectList.add(client);
 
       // 返回消息
@@ -209,6 +209,12 @@ class ServerMessageHandlerByType with Console {
       webSocket.add(json.encode(re));
       printSuccess(
           'Client connected: IP = $clientIp, Port = $clientPort is connect successful!');
+
+      // ------认证成功被动触发一次离线消息队列处理
+      OffLine offLine = OffLine();
+      if (offLine.isOffLine) {
+        offLine.offLineHandler();
+      }
     } else {
       // 2.2.不通过client认证，则返回错误消息
       Map re = {

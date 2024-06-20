@@ -40,7 +40,7 @@ class GlobalManager {
   // 6.去全局设置server在线client MessageQueue map: 用于client端使用: 页面client面向该编程即可
   static Map<String, MessageQueue> userMapMsgQueue = Map();
   // 7.全局初始化设置client端等待同意好友申请的消息队列
-  static MessageQueue waitAgreeUserAddClientQueue = MessageQueue();
+  // static MessageQueue waitAgreeUserAddClientQueue = MessageQueue();
 
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 
