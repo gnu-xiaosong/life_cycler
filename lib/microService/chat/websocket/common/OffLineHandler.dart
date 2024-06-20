@@ -68,24 +68,23 @@ class OffLine with Console {
   Future<void> offLineHandler() async {
     printInfo("---------Handler Offline Message Queue----------");
     int length = GlobalManager.offLineMessageQueue.length;
-
+    printInfo(
+        "OffLine msg counts: ${GlobalManager.offLineMessageQueue.length}");
     while (length-- > 0) {
       printInfo("msg index=$length");
       // 获取当前出队列msg
       Map? msg = GlobalManager.offLineMessageQueue.dequeue();
-      printInfo("Offline Msg Type: ${msg?['type']}");
 
       // **********切换secret进行文本的加密**********
       String deviceId = msg?["deviceId"]; // 仅仅离线模式才有该字段,发送者
       String secret = await UniqueDeviceId.getDeviceUuid(); // 仅仅离线模式才有该字段，发送者
-
+      printInfo("Offline Msg Type: ${msg?["msg_map"]['type']}");
       // 第一道防护解密: 存储解密
       Map? de_map =
           MessageEncrypte().decodeMessage(secret, msg!["msg_map"]["info"]);
 
       printInfo("Content msg: $de_map");
-      // 2.第二道防护:加密,通讯秘钥加密
-      /// (1) 获取目标(接收信息者)的deviceId
+
       String receive_deviceId = de_map?["recipient"]["id"];
 
       /// (2) 根据device获取clientObject对象
@@ -97,6 +96,8 @@ class OffLine with Console {
         GlobalManager.offLineMessageQueue.enqueue(msg);
       } else {
         /// (3) 根据发送者的secret加密文本
+        // 2.第二道防护:加密,通讯秘钥加密
+        // (1) 获取目标(接收信息者)的deviceId
         Map reEncode_map = MessageEncrypte().encodeMessage(
             receive_clientObject!.secret, de_map as Map<String, dynamic>);
 
