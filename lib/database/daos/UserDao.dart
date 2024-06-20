@@ -8,10 +8,10 @@ import '../../manager/GlobalManager.dart';
 
 class UserDao implements BaseDao<User> {
   // 获取database单例
-  static LocalDatabase db = GlobalManager.database;
+  LocalDatabase db = GlobalManager.database;
 
   // 获取用户，分页查询，按时间查询
-  static Future<List> selectUserByPage(int page, int pageNum) {
+  Future<List> selectUserByPage(int page, int pageNum) {
     /*
       page: 页面 1,2.。。。
       pageNum: 每页数量
@@ -31,17 +31,18 @@ class UserDao implements BaseDao<User> {
   }
 
   // 插入数据
-  static insertUser(UsersCompanion usersCompanion) async {
-    // 构建
-    final result = await db.batch((batch) {
-      batch.insertAll(db.users, [usersCompanion]);
-    });
-
-    return result;
+  Future<bool> insertUser(UsersCompanion usersCompanion) async {
+    try {
+      await db.into(db.users).insert(usersCompanion);
+      return true; // 插入成功，返回 true
+    } catch (e) {
+      print('插入用户失败: $e');
+      return false; // 插入失败，返回 false
+    }
   }
 
   // 更新数据
-  static updateUser(UsersCompanion usersCompanion) async {
+  updateUser(UsersCompanion usersCompanion) async {
     int result = 0;
     await db.update(db.users)
       ..where((tbl) => tbl.id.equals(usersCompanion.id as int))
@@ -54,7 +55,7 @@ class UserDao implements BaseDao<User> {
   }
 
   // 删除数据
-  static int deleteUser(UsersCompanion usersCompanion) {
+  int deleteUser(UsersCompanion usersCompanion) {
     // 删除条数
     int result = 0;
     db.delete(db.users)

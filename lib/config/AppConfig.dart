@@ -21,9 +21,6 @@ import '../microService/chat/ChatList.dart';
 import '../microService/chat/ChatPage.dart';
 import '../pages/mobile/Page2.dart';
 import '../pages/mobile/Page3.dart';
-import '../pages/mobile/PageHome.dart';
-
-import '../pages/mobile/PagePerson.dart';
 import '../../widgets/BottomNavigationBars/animated_notch_bottom_bar.dart';
 import '../../widgets/BottomNavigationBars/bottom_navigation_bar_1.dart';
 import '../../widgets/BottomNavigationBars/bubble_bottom_bar.dart';
@@ -48,6 +45,9 @@ class AppConfig extends ToolsManager {
   static InternetAddress? ip = InternetAddress.anyIPv4;
   // 端口port
   static const int port = 1314;
+
+  // chat username 聊天用户名
+  static String username = "小明";
 
   // 是否启用自适应布局系统
   static bool systemAdaptive = true;

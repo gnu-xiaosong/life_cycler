@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:popup_menu_plus/popup_menu_plus.dart';
 import 'package:app_template/microService/chat/widget/AddUser.dart';
 import 'package:app_template/microService/chat/widget/CreateGroup.dart';
-import 'package:app_template/microService/chat/widget/Scan.dart';
+import 'package:app_template/microService/chat/widget/ScanPage.dart';
 
 import 'AddUserQr.dart';
 
@@ -44,7 +44,7 @@ List menus = <Map>[
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (BuildContext context) {
-            return const Scan();
+            return ScanPage();
           },
         ),
       );
@@ -70,6 +70,7 @@ List menus = <Map>[
         title: 'QR'.tr(),
         image: const Icon(Icons.qr_code, color: Colors.white)),
     "click": (BuildContext context) {
+      print("-----------------error---------------------");
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (BuildContext context) {

@@ -62,9 +62,77 @@ class ServerMessageHandlerByType with Console {
           clientObject.secret, msgDataTypeMap["info"]);
       // 请求在线用户
       requestInlineClient(request, webSocket);
+    } else if (msgDataTypeMap["type"] == "REQUEST_SCAN_ADD_USER") {
+      printInfo("-------------REQUEST_SCAN_ADD_USER-----------------");
+
+      // 用于扫码添加好友
+      // 获取websoket对应的ClientObject对象
+      ClientObject clientObject = getClientObject(request, webSocket);
+      //请求在线客户端client
+      // 解密info字段
+      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
+          clientObject.secret, msgDataTypeMap["info"]);
+
+      // 请求在线用户
+      responseScanAddUser(request, webSocket);
     } else {
       // 未标识消息类型
       printWarn("未识别消息类型: ${msgDataTypeMap.toString()}");
+    }
+  }
+
+  /*
+   用于扫码添加好友
+   */
+  void responseScanAddUser(HttpRequest request, WebSocket webSocket) {
+    // 接收方deviceId
+    String recive_deviceId = msgDataTypeMap["info"]["recipient"]["id"] ?? "";
+
+    // 根据deviceId获取clientObject
+    ClientObject? receive_clientObject =
+        tool.getClientObjectByDeviceId(recive_deviceId);
+
+    /// 1.封装数据
+    Map send_data = msgDataTypeMap;
+
+    print(send_data);
+
+    // 判断对方是否在线
+    if (receive_clientObject == null) {
+      //***************************待测试需要找第三个设备: 存在bug******************
+      print("对方不在线");
+
+      /// 2.加密数据
+      send_data["info"] = MessageEncrypte()
+          .encodeMessage(receive_clientObject!.secret, send_data["info"]);
+      // 发送者
+      String send_deviceId = msgDataTypeMap["info"]["sender"]["id"] ?? "";
+      ClientObject? send_clientObject =
+          tool.getClientObjectByDeviceId(send_deviceId);
+      // 利用sender方加密信息
+      send_data["info"] = MessageEncrypte()
+          .encodeMessage(send_clientObject!.secret, send_data["info"]);
+      // 不在线，进入离线消息队列等待： send_data已加密数据
+      printWarn(
+          "because receiver is offline for REQUEST_SCAN_ADD_USER,so the msg data enter the offLineMessageQueue");
+      OffLine offLine = OffLine();
+      offLine.enOffLineQueue(send_deviceId, send_clientObject!.secret,
+          send_data); // send_data已加密，发送方加密
+    } else {
+      //***************************待测试需要找第三个设备******************
+      // 在线直接发起add user请求
+      /// 2.加密数据
+      send_data["info"] = MessageEncrypte()
+          .encodeMessage(receive_clientObject!.secret, send_data["info"]);
+
+      /// 3.发送
+      try {
+        receive_clientObject.socket.add(json.encode(send_data));
+        printInfo("server send REQUEST_SCAN_ADD_USER: successful!");
+      } catch (e) {
+        printCatch(
+            "server send REQUEST_SCAN_ADD_USER: failure!,more detail: $e");
+      }
     }
   }
 
@@ -237,8 +305,8 @@ class ServerMessageHandlerByType with Console {
         "info": {"deviceId": inlineDeviceId}
       };
       // 4.加密
-      re["info"] = MessageEncrypte()
-          .encodeMessage(clientObject!.secret, json.encode(re["info"]));
+      re["info"] =
+          MessageEncrypte().encodeMessage(clientObject!.secret, re["info"]);
       // 5.发送
       try {
         printInfo("-----REQUEST_INLINE_CLIENT------");

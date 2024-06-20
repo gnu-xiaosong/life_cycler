@@ -21,8 +21,4 @@ class UserGroupRelations extends Table {
   /// 用户加入群组的时间，默认为当前时间
   TextColumn get joinedAt =>
       text().withDefault(Constant(DateTime.now().toIso8601String()))();
-
-  /// 定义唯一约束，防止相同用户重复加入相同群组
-  @override
-  Set<Column> get primaryKey => {userId, groupId};
 }

@@ -101,7 +101,6 @@ dependencies:
   avatar_glow: ^3.0.1
   random_avatar: ^0.0.7
   starlight_popup_menu: ^0.0.3+1
-  mobile_scanner: ^4.0.1
   popup_menu_plus: ^0.0.6
   safe_device: ^1.1.7
   lan_scanner: ^4.0.0+1
@@ -112,7 +111,11 @@ dependencies:
   web_socket_client: ^0.1.0
   chalkdart: ^2.2.1
   uuid: ^3.0.6
-  pretty_qr_code: 2.0.3
+  pretty_qr_code: ^3.3.0
+  mobile_scanner: ^4.0.1
+
+
+
 
 
 

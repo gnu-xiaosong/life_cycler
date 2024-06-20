@@ -270,10 +270,17 @@ client端发起请求
 server端响应
 
 ```
-
+{
+	"type": "REQUEST_INLINE_CLIENT",
+	"info": {
+		"deviceId": [],// 在线设备唯一性id list，不包括本机deviceId
+	}
+}
 ```
 
+##### 扫码加好友设计
 
+<img src="project/README/image-20240618230120303.png" alt="image-20240618230120303" style="zoom: 67%;" />
 
 
 

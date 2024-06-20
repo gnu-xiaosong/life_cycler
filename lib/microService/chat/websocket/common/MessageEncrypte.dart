@@ -15,26 +15,25 @@ class MessageEncrypte extends Tool with Console {
   /*
    为map的每一个键值进行加密
    */
-  String encodeMessage(String key_secret, String data_map_str) {
+  Map encodeMessage(String key_secret, Map<String, dynamic> data_map) {
     // 加密
-    String data_str = TextEncryptionForJson().encrypt(
-      data_map_str,
-      shift,
-      key_secret,
-    );
+    TextEncryptionForJson textEncryptionForJson = TextEncryptionForJson();
+    Map endata_map =
+        textEncryptionForJson.encryptJson(data_map, shift, key_secret);
 
-    return data_str;
+    return endata_map;
   }
 
   /*
    为map的每一个键值进行解密
    */
-  Map? decodeMessage(String key_secret, String data_str) {
-    String str = TextEncryptionForJson().decrypt(key_secret, shift, data_str);
-    // 转为map
-    Map? data_map = stringToMap(str);
+  Map? decodeMessage(String key_secret, Map<String, dynamic> data_map) {
+    // 加密
+    TextEncryptionForJson textEncryptionForJson = TextEncryptionForJson();
+    Map endata_map =
+        textEncryptionForJson.decryptJson(data_map, shift, key_secret);
 
-    return data_map;
+    return endata_map;
   }
 
   /*
@@ -67,23 +66,36 @@ class MessageEncrypte extends Tool with Console {
 
   // 认证消息加密算法
   Map encodeAuth(Map<String, dynamic> data_map) {
-    // return data_map;
-    data_map.forEach((key, value) {
-      data_map[key] = TextEncryptionForJson()
-          .encrypt(value.toString(), shift, auth_key.toString());
-    });
+    // 加密
+    TextEncryptionForJson textEncryptionForJson = TextEncryptionForJson();
+    Map endata_map =
+        textEncryptionForJson.encryptJson(data_map, shift, auth_key);
 
-    return data_map;
+    return endata_map;
+
+    // // return data_map;
+    // data_map.forEach((key, value) {
+    //   data_map[key] = TextEncryption()
+    //       .encrypt(value.toString(), shift, auth_key.toString());
+    // });
+    //
+    // return data_map;
   }
 
   // 认证消息解密算法
   Map decodeAuth(Map<String, dynamic> data_map) {
-    data_map.forEach((key, value) {
-      String text = TextEncryptionForJson()
-          .decrypt(value.toString(), shift, auth_key.toString());
-      data_map[key] = text;
-    });
-    return data_map;
+    TextEncryptionForJson textEncryptionForJson = TextEncryptionForJson();
+    Map endata_map =
+        textEncryptionForJson.decryptJson(data_map, shift, auth_key);
+
+    return endata_map;
+
+    // data_map.forEach((key, value) {
+    //   String text = TextEncryption()
+    //       .decrypt(value.toString(), shift, auth_key.toString());
+    //   data_map[key] = text;
+    // });
+    // return data_map;
   }
 
   //*****************************************************************************************

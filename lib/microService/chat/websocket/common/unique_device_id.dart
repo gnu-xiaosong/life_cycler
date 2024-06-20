@@ -14,6 +14,16 @@ class UniqueDeviceId {
       } else if (Platform.isIOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         deviceIdentifier = iosInfo.identifierForVendor ?? ''; // 使用 iOS 设备的唯一标识符
+      } else if (Platform.isWindows) {
+        WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+        deviceIdentifier = windowsInfo.computerName +
+            windowsInfo.systemMemoryInMegabytes.toString(); // 使用 Windows 设备的信息
+      } else if (Platform.isLinux) {
+        LinuxDeviceInfo linuxInfo = await deviceInfo.linuxInfo;
+        deviceIdentifier = linuxInfo.machineId ?? ''; // 使用 Linux 设备的机器标识符
+      } else if (Platform.isMacOS) {
+        MacOsDeviceInfo macOsInfo = await deviceInfo.macOsInfo;
+        deviceIdentifier = macOsInfo.model ?? ''; // 使用 macOS 设备的型号信息
       } else {
         throw UnsupportedError("该平台不受支持");
       }

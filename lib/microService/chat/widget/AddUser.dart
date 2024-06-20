@@ -1,4 +1,5 @@
 import 'package:app_template/manager/GlobalManager.dart';
+import 'package:app_template/manager/TestManager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -38,9 +39,9 @@ class _AddUserState extends State<AddUser> {
             MaterialButton(
               height: 45.0,
               onPressed: () {
-                // socket client
+                TestManager.testADO();
               },
-              child: const Text('扫描局域网内所有ip'),
+              child: const Text('add user'),
             ),
             // 启动服务端
             MaterialButton(

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import '../../microService/chat/widget/AddUser.dart';
 import '../../microService/chat/widget/CreateGroup.dart';
-import '../../microService/chat/widget/Scan.dart';
+import '../../microService/chat/widget/ScanPage.dart';
 
 class DropdownButton1 extends StatefulWidget {
   const DropdownButton1({super.key});
@@ -137,7 +137,7 @@ abstract class MenuItems {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return const Scan();
+              return ScanPage();
             },
           ),
         );

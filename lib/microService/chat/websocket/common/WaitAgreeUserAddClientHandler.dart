@@ -1,5 +1,5 @@
 /*
-  离线消息队列处理类
+  离线消息队列处理类: 客户端
  */
 
 import 'dart:convert';
@@ -10,29 +10,19 @@ import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import 'package:app_template/microService/chat/websocket/model/ClientObject.dart';
 
-class OffLine with Console {
-  // 离线消息队列开关
-  bool isOffLine = true;
+class WaitAgreeUserAddClientHandler with Console {
+  // 等待好友申请消息队列开关:
+  bool isWaitAgreeUserAdd = true;
 
-  // 将消息进入离线消息队列中
-  bool enOffLineQueue(String deviceId, String send_secret, Map message) {
-    /*
-       deviceId      deviceId,
-       secret      send_secret,  都是发送者
-      message   Map     加密数据
-     */
-    // 封装离线消息队列Map
-    Map offMessage = {
-      "deviceId": deviceId,
-      "secret": send_secret,
-      "msg_map": message
-    };
-    // 进入离线消息队列中
+  // 将消息进入等待好友申请队列中
+  bool enAgreeUserAddQueue(Map data) {
+    // 进入等待好友申请消息队列中
     try {
-      GlobalManager.offLineMessageQueue.enqueue(offMessage);
+      GlobalManager.waitAgreeUserAddClientQueue.enqueue(data);
+      printCatch("msg进入等待好友申请消息队列成功! data=$data");
       return true;
     } catch (e) {
-      printCatch(" msg进入离线消息队列失败!, more detail: $e");
+      printCatch("msg进入等待好友申请消息队列失败!, more detail: $e");
       return false;
     }
   }

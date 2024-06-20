@@ -18,23 +18,20 @@ class Users extends Table {
       text().withLength(min: 1, max: 50).customConstraint('NOT NULL UNIQUE')();
 
   /// 用户邮箱，要求唯一且长度在1到100之间
-  TextColumn get email =>
-      text().withLength(min: 1, max: 100).customConstraint('NOT NULL UNIQUE')();
+  TextColumn get email => text()();
 
   /// 用户密码的哈希值
   TextColumn get passwordHash => text()();
 
-  /// 用户创建时间，默认为当前时间
-  TextColumn get createdAt =>
-      text().withDefault(Constant(DateTime.now().toIso8601String()))();
-
-  /// 用户更新时间，默认为当前时间
-  TextColumn get updatedAt =>
-      text().withDefault(Constant(DateTime.now().toIso8601String()))();
-
   /// 用户头像的URL，允许为空
-  TextColumn get profilePicture => text().nullable()();
+  TextColumn get profilePicture => text().withLength(min: 1, max: 50)();
 
   /// 用户的状态消息，默认为true
   IntColumn get status => integer().nullable()();
+
+  /// 用户创建时间，默认为当前时间
+  TextColumn get createdAt => text().withLength(min: 1, max: 50)();
+
+  /// 用户更新时间，默认为当前时间
+  TextColumn get updatedAt => text().withLength(min: 1, max: 50)();
 }

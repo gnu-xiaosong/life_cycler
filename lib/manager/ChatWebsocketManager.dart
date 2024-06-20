@@ -21,9 +21,10 @@ import '../microService/chat/websocket/common/Console.dart';
 
 class ChatWebsocketManager with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
-
+  // websocket client instance
+  ChatWebsocketClient chatWebsocketClient = ChatWebsocketClient();
   // websocket server instance
-  ChatWebsocketServer? chatWebsocketServer;
+  ChatWebsocketServer? chatWebsocketServer = ChatWebsocketServer();
   // 静态属性，存储唯一实例
   static ChatWebsocketManager? _instance;
   /*
@@ -38,7 +39,7 @@ class ChatWebsocketManager with Console {
   bool result = true; // 是否作为服务端
   bool isServer = true; // 是否作为服务端
   // 限制扫描最大ip数
-  Object limitPort = 100;
+  Object limitPort = 10;
 
   // 私有的命名构造函数，确保外部不能实例化该类
   ChatWebsocketManager._internal() {
@@ -115,7 +116,6 @@ class ChatWebsocketManager with Console {
     if (isServer) {
       // 启动server
       // 实例化WebSocketServer
-      chatWebsocketServer = ChatWebsocketServer();
       chatWebsocketServer?.ip = AppConfig.ip;
       chatWebsocketServer?.port = AppConfig.port;
       // 启动server
@@ -124,7 +124,6 @@ class ChatWebsocketManager with Console {
       printSuccess("启动server成功!");
     } else {
       // 启动client
-      ChatWebsocketClient chatWebsocketClient = ChatWebsocketClient();
       chatWebsocketClient.ip = _ip;
       chatWebsocketClient.port = AppConfig.port;
       // 连接
@@ -135,8 +134,6 @@ class ChatWebsocketManager with Console {
       } catch (e) {
         printCatch("启动client失败!more detail:$e");
       }
-      // 测试
-      TestManager.shellChatTest(chatWebsocketClient.send);
     }
   }
 

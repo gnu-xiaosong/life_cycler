@@ -41,44 +41,45 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   @override
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
       'email', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 100),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL UNIQUE');
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _passwordHashMeta =
       const VerificationMeta('passwordHash');
   @override
   late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
       'password_hash', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: Constant(DateTime.now().toIso8601String()));
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
-      'updated_at', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: Constant(DateTime.now().toIso8601String()));
   static const VerificationMeta _profilePictureMeta =
       const VerificationMeta('profilePicture');
   @override
   late final GeneratedColumn<String> profilePicture = GeneratedColumn<String>(
-      'profile_picture', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+      'profile_picture', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<int> status = GeneratedColumn<int>(
       'status', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+      'created_at', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+      'updated_at', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -86,10 +87,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         username,
         email,
         passwordHash,
-        createdAt,
-        updatedAt,
         profilePicture,
-        status
+        status,
+        createdAt,
+        updatedAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -130,23 +131,29 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_passwordHashMeta);
     }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    }
     if (data.containsKey('profile_picture')) {
       context.handle(
           _profilePictureMeta,
           profilePicture.isAcceptableOrUnknown(
               data['profile_picture']!, _profilePictureMeta));
+    } else if (isInserting) {
+      context.missing(_profilePictureMeta);
     }
     if (data.containsKey('status')) {
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
     }
     return context;
   }
@@ -167,14 +174,14 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
       passwordHash: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}password_hash'])!,
+      profilePicture: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}profile_picture'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}status']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}updated_at'])!,
-      profilePicture: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}profile_picture']),
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}status']),
     );
   }
 
@@ -200,27 +207,27 @@ class User extends DataClass implements Insertable<User> {
   /// 用户密码的哈希值
   final String passwordHash;
 
+  /// 用户头像的URL，允许为空
+  final String profilePicture;
+
+  /// 用户的状态消息，默认为true
+  final int? status;
+
   /// 用户创建时间，默认为当前时间
   final String createdAt;
 
   /// 用户更新时间，默认为当前时间
   final String updatedAt;
-
-  /// 用户头像的URL，允许为空
-  final String? profilePicture;
-
-  /// 用户的状态消息，默认为true
-  final int? status;
   const User(
       {required this.id,
       required this.deviceId,
       required this.username,
       required this.email,
       required this.passwordHash,
+      required this.profilePicture,
+      this.status,
       required this.createdAt,
-      required this.updatedAt,
-      this.profilePicture,
-      this.status});
+      required this.updatedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -229,14 +236,12 @@ class User extends DataClass implements Insertable<User> {
     map['username'] = Variable<String>(username);
     map['email'] = Variable<String>(email);
     map['password_hash'] = Variable<String>(passwordHash);
-    map['created_at'] = Variable<String>(createdAt);
-    map['updated_at'] = Variable<String>(updatedAt);
-    if (!nullToAbsent || profilePicture != null) {
-      map['profile_picture'] = Variable<String>(profilePicture);
-    }
+    map['profile_picture'] = Variable<String>(profilePicture);
     if (!nullToAbsent || status != null) {
       map['status'] = Variable<int>(status);
     }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
     return map;
   }
 
@@ -247,13 +252,11 @@ class User extends DataClass implements Insertable<User> {
       username: Value(username),
       email: Value(email),
       passwordHash: Value(passwordHash),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-      profilePicture: profilePicture == null && nullToAbsent
-          ? const Value.absent()
-          : Value(profilePicture),
+      profilePicture: Value(profilePicture),
       status:
           status == null && nullToAbsent ? const Value.absent() : Value(status),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -266,10 +269,10 @@ class User extends DataClass implements Insertable<User> {
       username: serializer.fromJson<String>(json['username']),
       email: serializer.fromJson<String>(json['email']),
       passwordHash: serializer.fromJson<String>(json['passwordHash']),
+      profilePicture: serializer.fromJson<String>(json['profilePicture']),
+      status: serializer.fromJson<int?>(json['status']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
-      profilePicture: serializer.fromJson<String?>(json['profilePicture']),
-      status: serializer.fromJson<int?>(json['status']),
     );
   }
   @override
@@ -281,10 +284,10 @@ class User extends DataClass implements Insertable<User> {
       'username': serializer.toJson<String>(username),
       'email': serializer.toJson<String>(email),
       'passwordHash': serializer.toJson<String>(passwordHash),
+      'profilePicture': serializer.toJson<String>(profilePicture),
+      'status': serializer.toJson<int?>(status),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
-      'profilePicture': serializer.toJson<String?>(profilePicture),
-      'status': serializer.toJson<int?>(status),
     };
   }
 
@@ -294,21 +297,20 @@ class User extends DataClass implements Insertable<User> {
           String? username,
           String? email,
           String? passwordHash,
+          String? profilePicture,
+          Value<int?> status = const Value.absent(),
           String? createdAt,
-          String? updatedAt,
-          Value<String?> profilePicture = const Value.absent(),
-          Value<int?> status = const Value.absent()}) =>
+          String? updatedAt}) =>
       User(
         id: id ?? this.id,
         deviceId: deviceId ?? this.deviceId,
         username: username ?? this.username,
         email: email ?? this.email,
         passwordHash: passwordHash ?? this.passwordHash,
+        profilePicture: profilePicture ?? this.profilePicture,
+        status: status.present ? status.value : this.status,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
-        profilePicture:
-            profilePicture.present ? profilePicture.value : this.profilePicture,
-        status: status.present ? status.value : this.status,
       );
   @override
   String toString() {
@@ -318,17 +320,17 @@ class User extends DataClass implements Insertable<User> {
           ..write('username: $username, ')
           ..write('email: $email, ')
           ..write('passwordHash: $passwordHash, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('profilePicture: $profilePicture, ')
-          ..write('status: $status')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, deviceId, username, email, passwordHash,
-      createdAt, updatedAt, profilePicture, status);
+      profilePicture, status, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -338,10 +340,10 @@ class User extends DataClass implements Insertable<User> {
           other.username == this.username &&
           other.email == this.email &&
           other.passwordHash == this.passwordHash &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
           other.profilePicture == this.profilePicture &&
-          other.status == this.status);
+          other.status == this.status &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
@@ -350,20 +352,20 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> username;
   final Value<String> email;
   final Value<String> passwordHash;
+  final Value<String> profilePicture;
+  final Value<int?> status;
   final Value<String> createdAt;
   final Value<String> updatedAt;
-  final Value<String?> profilePicture;
-  final Value<int?> status;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.deviceId = const Value.absent(),
     this.username = const Value.absent(),
     this.email = const Value.absent(),
     this.passwordHash = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
     this.profilePicture = const Value.absent(),
     this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
@@ -371,24 +373,27 @@ class UsersCompanion extends UpdateCompanion<User> {
     required String username,
     required String email,
     required String passwordHash,
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.profilePicture = const Value.absent(),
+    required String profilePicture,
     this.status = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
   })  : deviceId = Value(deviceId),
         username = Value(username),
         email = Value(email),
-        passwordHash = Value(passwordHash);
+        passwordHash = Value(passwordHash),
+        profilePicture = Value(profilePicture),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? deviceId,
     Expression<String>? username,
     Expression<String>? email,
     Expression<String>? passwordHash,
-    Expression<String>? createdAt,
-    Expression<String>? updatedAt,
     Expression<String>? profilePicture,
     Expression<int>? status,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -396,10 +401,10 @@ class UsersCompanion extends UpdateCompanion<User> {
       if (username != null) 'username': username,
       if (email != null) 'email': email,
       if (passwordHash != null) 'password_hash': passwordHash,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
       if (profilePicture != null) 'profile_picture': profilePicture,
       if (status != null) 'status': status,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -409,20 +414,20 @@ class UsersCompanion extends UpdateCompanion<User> {
       Value<String>? username,
       Value<String>? email,
       Value<String>? passwordHash,
+      Value<String>? profilePicture,
+      Value<int?>? status,
       Value<String>? createdAt,
-      Value<String>? updatedAt,
-      Value<String?>? profilePicture,
-      Value<int?>? status}) {
+      Value<String>? updatedAt}) {
     return UsersCompanion(
       id: id ?? this.id,
       deviceId: deviceId ?? this.deviceId,
       username: username ?? this.username,
       email: email ?? this.email,
       passwordHash: passwordHash ?? this.passwordHash,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
       profilePicture: profilePicture ?? this.profilePicture,
       status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -444,17 +449,17 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (passwordHash.present) {
       map['password_hash'] = Variable<String>(passwordHash.value);
     }
-    if (createdAt.present) {
-      map['created_at'] = Variable<String>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<String>(updatedAt.value);
-    }
     if (profilePicture.present) {
       map['profile_picture'] = Variable<String>(profilePicture.value);
     }
     if (status.present) {
       map['status'] = Variable<int>(status.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
     }
     return map;
   }
@@ -467,10 +472,10 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('username: $username, ')
           ..write('email: $email, ')
           ..write('passwordHash: $passwordHash, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('profilePicture: $profilePicture, ')
-          ..write('status: $status')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1362,7 +1367,7 @@ class $UserGroupRelationsTable extends UserGroupRelations
       'id', aliasedName, false,
       hasAutoIncrement: true,
       type: DriftSqlType.int,
-      requiredDuringInsert: true,
+      requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
@@ -1409,8 +1414,6 @@ class $UserGroupRelationsTable extends UserGroupRelations
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('user_id')) {
       context.handle(_userIdMeta,
@@ -1436,7 +1439,7 @@ class $UserGroupRelationsTable extends UserGroupRelations
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {userId, groupId};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   UserGroupRelation map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1570,24 +1573,20 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
   final Value<int> groupId;
   final Value<bool> isAdmin;
   final Value<String> joinedAt;
-  final Value<int> rowid;
   const UserGroupRelationsCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
     this.groupId = const Value.absent(),
     this.isAdmin = const Value.absent(),
     this.joinedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   UserGroupRelationsCompanion.insert({
-    required int id,
+    this.id = const Value.absent(),
     required int userId,
     required int groupId,
     this.isAdmin = const Value.absent(),
     this.joinedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        userId = Value(userId),
+  })  : userId = Value(userId),
         groupId = Value(groupId);
   static Insertable<UserGroupRelation> custom({
     Expression<int>? id,
@@ -1595,7 +1594,6 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
     Expression<int>? groupId,
     Expression<bool>? isAdmin,
     Expression<String>? joinedAt,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1603,7 +1601,6 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
       if (groupId != null) 'group_id': groupId,
       if (isAdmin != null) 'is_admin': isAdmin,
       if (joinedAt != null) 'joined_at': joinedAt,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
@@ -1612,15 +1609,13 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
       Value<int>? userId,
       Value<int>? groupId,
       Value<bool>? isAdmin,
-      Value<String>? joinedAt,
-      Value<int>? rowid}) {
+      Value<String>? joinedAt}) {
     return UserGroupRelationsCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       groupId: groupId ?? this.groupId,
       isAdmin: isAdmin ?? this.isAdmin,
       joinedAt: joinedAt ?? this.joinedAt,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1642,9 +1637,6 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
     if (joinedAt.present) {
       map['joined_at'] = Variable<String>(joinedAt.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -1655,8 +1647,7 @@ class UserGroupRelationsCompanion extends UpdateCompanion<UserGroupRelation> {
           ..write('userId: $userId, ')
           ..write('groupId: $groupId, ')
           ..write('isAdmin: $isAdmin, ')
-          ..write('joinedAt: $joinedAt, ')
-          ..write('rowid: $rowid')
+          ..write('joinedAt: $joinedAt')
           ..write(')'))
         .toString();
   }

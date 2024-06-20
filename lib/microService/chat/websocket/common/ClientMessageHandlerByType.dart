@@ -36,23 +36,57 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 从缓存中取出secret 通讯秘钥
       String? secret = GlobalManager.appCache.getString("chat_secret");
       // 解密info字段
-      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
-          secret!, msgDataTypeMap["info"].toString());
+      msgDataTypeMap["info"] =
+          messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
       // 为消息类型
       message();
     } else if (msgDataTypeMap["type"] == "REQUEST_INLINE_CLIENT") {
       // 从缓存中取出secret 通讯秘钥
       String? secret = GlobalManager.appCache.getString("chat_secret");
       // 解密info字段
-      msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
-          secret!, msgDataTypeMap["info"].toString());
+      msgDataTypeMap["info"] =
+          messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
       // 处理在线client
       requestInlineClient();
+    } else if (msgDataTypeMap["type"] == "REQUEST_SCAN_ADD_USER") {
+      // 通过扫码请求添加好友请求
+      // 从缓存中取出secret 通讯秘钥
+      String? secret = GlobalManager.appCache.getString("chat_secret");
+      // 解密info字段
+      msgDataTypeMap["info"] =
+          messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
+      // 处理在线client
+      scanQrAddUser();
     } else {
       // 为表示消息类型: 明文传输
       printWarn("为标识消息类型");
       other();
     }
+  }
+
+  /*
+  扫描Qr添加用户
+   */
+  void scanQrAddUser() {
+    // 统一处理服务器相应的扫描Qr天假好友请求，两种方式
+    /// 方式一 利用待同意好友消息队列（等待制) 推荐
+    /// 方式二 全局弹窗相应通知用户(即刻制)
+  }
+
+  /*
+   处理server在线client用户
+   */
+  void requestInlineClient() {
+    // 1.获取deviceId 列表
+    List<String> deviceIdList = msgDataTypeMap["info"]["deviceId"];
+    // 2.将其存入缓存中
+    GlobalManager.appCache.setStringList("deviceId_list", deviceIdList);
+    // 3.创建为每个clientObject对象，采用list存储
+    deviceIdList.map((deviceId) {
+      // 为每个deviceId设置一个全局的消息队列
+      GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
+    });
+    printInfo("userMapMsgQueue:$GlobalManager.userMapMsgQueue");
   }
 
   /*
@@ -117,22 +151,6 @@ class ClientMessageHandlerByType extends Tool with Console {
     // 调用消息处理函数
     handlerMessgae(msgDataTypeMap);
     //***********************Message Type  Handler*******************************
-  }
-
-  /*
-   处理server在线client用户
-   */
-  void requestInlineClient() {
-    // 1.获取deviceId 列表
-    List<String> deviceIdList = msgDataTypeMap["info"]["deviceId"];
-    // 2.将其存入缓存中
-    GlobalManager.appCache.setStringList("deviceId_list", deviceIdList);
-    // 3.创建为每个clientObject对象，采用list存储
-    deviceIdList.map((deviceId) {
-      // 为每个deviceId设置一个全局的消息队列
-      GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
-    });
-    printInfo("userMapMsgQueue:$GlobalManager.userMapMsgQueue");
   }
 
   /*

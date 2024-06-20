@@ -43,5 +43,11 @@
   "add user": "添加用户",
   "create group": "创建群聊",
   "scan": "扫描",
-  "QR": "二维码"
+  "QR": "二维码",
+  "loading": "加载中",
+  "successful": "成功",
+  "add": "添加",
+  "Device ID": "设备ID",
+  "Username": "名称",
+  "leave message": "留言"
 }

@@ -5,10 +5,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app_template/config/AppConfig.dart';
 import 'package:app_template/database/LocalStorage.dart';
 import 'package:app_template/database/daos/ChatDao.dart';
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:crypto/crypto.dart';
 
 import '../model/ClientObject.dart';
@@ -118,5 +120,19 @@ class Tool with Console {
         .toList();
 
     return deviceList;
+  }
+
+  /*
+  生成加好友二维码的存储信息
+   */
+  Future<Map> generateAddUserQrInfo() async {
+    // 设备唯一性id
+    String deviceId = await UniqueDeviceId.getDeviceUuid();
+    // 用户名
+    String username = AppConfig.username;
+    // 封装
+    Map re = {"type": "ADD_USER", "deviceId": deviceId, "username": username};
+
+    return re;
   }
 }

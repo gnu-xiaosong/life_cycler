@@ -11,13 +11,14 @@ import 'package:app_template/database/LocalStorage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../database/daos/UserDao.dart';
+import '../microService/chat/websocket/common/UserChat.dart';
 
 class TestManager {
   // 公共调试函数
   static void debug() {
     print("------------------debug task test-----------");
     // 调试ADO
-    testADO();
+    // testADO();
   }
 
   //http返回数据打印输出
@@ -29,39 +30,24 @@ class TestManager {
     print("返回数据: ${response?.data}");
   }
 
-  // 客户端chat命令式输入
-  static void shellChatTest(Function send) {
-    while (true) {
-      // 获取用户输入
-    }
-  }
-
   // sqlite数据库调试
   static Future<void> testADO() async {
     try {
-      print("---------------数据库ADO测试-----------");
-      // userCompanion 辅助器
-      UsersCompanion usersCompanion = UsersCompanion.insert(
-          username: "小S",
-          email: "13145002201@qq.com",
-          passwordHash: "cgsucgvsdhsdhfjsdbfjdsf",
-          deviceId: '12255555');
+      UserChat userChat = UserChat();
 
-      print(usersCompanion.toString());
-      print("----------------插入操作------------");
-      // 插入数据
-      var result = UserDao.insertUser(usersCompanion);
-      print("插入操作: $result");
-      // 查询操作测试
-      final queryData = await UserDao.selectUserByPage(1, 10);
-      print("----------------查询操作------------");
-      for (var element in queryData) {
-        if (kDebugMode) {
-          print(element);
-        }
+      Map re = {
+        "deviceId": "deviceId2",
+        "username": "username3",
+        "profilePicture": "profilePicture"
+      };
+      print(re);
+      bool result = await userChat.addUserChat(
+          re["deviceId"], re["profilePicture"], re["username"]);
+      if (result) {
+        print("---------------测试插入okkkkkkk---------------------------");
+      } else {
+        print("----------------测试插入失敗--------------");
       }
-      print("---------------test 查询操作---------------");
-      print(queryData);
     } catch (e) {
       print("-EXCEPT: $e");
     }

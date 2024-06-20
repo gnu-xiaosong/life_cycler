@@ -92,7 +92,8 @@ class ChatWebsocketClient extends WebsocketClient with Console {
     // 从缓存中加载秘钥
     String secret = GlobalManager.appCache.getString("chat_secret") ?? "";
     // 加密
-    req["info"] = MessageEncrypte().encodeMessage(secret, json.encode(req));
+    req["info"] =
+        MessageEncrypte().encodeMessage(secret, req as Map<String, dynamic>);
     // 发送
     send(json.encode(req));
   }

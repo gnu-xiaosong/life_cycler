@@ -28,11 +28,6 @@ class ChatWebsocketServer extends WebSocketServer with Console {
   }
 
   /*
-    封装客户端连接对象: ChatClient 将其存储
-    paremater:
-   */
-
-  /*
   处理客户端断开连接
    */
   @override
