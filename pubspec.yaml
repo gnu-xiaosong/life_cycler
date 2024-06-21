@@ -113,6 +113,7 @@ dependencies:
   uuid: ^3.0.6
   pretty_qr_code: ^3.3.0
   mobile_scanner: ^4.0.1
+  quickalert: ^1.1.0
 
 
 

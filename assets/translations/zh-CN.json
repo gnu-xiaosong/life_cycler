@@ -49,5 +49,10 @@
   "add": "添加",
   "Device ID": "设备ID",
   "Username": "名称",
-  "leave message": "留言"
+  "leave message": "留言",
+  "from": "来自",
+  "ID": "ID",
+  "username": "用户",
+  "Agree": "同意",
+  "Cancel": "取消"
 }

@@ -40,6 +40,7 @@ void main() => GlobalManager.init().then((e) async {
         const ScreenBreakpoints(desktop: 800, tablet: 550, watch: 200),
       );
       runApp(ScreenUtilInit(
+
           //屏幕适配:自适应大小
           designSize: Size(360, 690),
           minTextAdapt: true,

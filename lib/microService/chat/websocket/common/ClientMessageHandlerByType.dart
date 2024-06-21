@@ -1,5 +1,5 @@
 /*
- 针对不同消息类型进行处理
+ 针对不同消息类型进行处理: client 客户端
  */
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
@@ -8,10 +8,12 @@ import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'ClientModel.dart';
 import 'MessageEncrypte.dart';
 
 class ClientMessageHandlerByType extends Tool with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
+  ClientModel clientModel = ClientModel();
   // 消息类型
   late Map msgDataTypeMap;
 
@@ -55,7 +57,7 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
-      printInfo(msgDataTypeMap);
+      // printInfo(msgDataTypeMap);
       // 处理在线client
       scanQrAddUser();
     } else {
@@ -66,12 +68,14 @@ class ClientMessageHandlerByType extends Tool with Console {
   }
 
   /*
-  扫描Qr添加用户
+  扫描Qr添加用户: widget用户UI
    */
   void scanQrAddUser() {
     // 统一处理服务器相应的扫描Qr天假好友请求，两种方式
     /// 方式一 利用待同意好友消息队列（等待制) 推荐
-    /// 方式二 全局弹窗相应通知用户(即刻制)
+    /// 方式二 全局弹窗相应通知用户(即刻制)，目前采用，后续改进为第一种
+    clientModel.addUserMsgQueue(msgDataTypeMap); //未加密
+    clientModel.test();
   }
 
   /*
@@ -87,7 +91,7 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 为每个deviceId设置一个全局的消息队列
       GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
     });
-    printInfo("userMapMsgQueue:$GlobalManager.userMapMsgQueue");
+    printInfo("userMapMsgQueue:${GlobalManager.userMapMsgQueue}");
   }
 
   /*
