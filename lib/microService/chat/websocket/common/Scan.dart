@@ -9,6 +9,7 @@ import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:uuid/uuid.dart';
 import '../../widget/ConstomAddDialog.dart';
 
 class Scan with Console {
@@ -24,17 +25,31 @@ class Scan with Console {
     }
   }
 
-  // 扫描加好友
-  Future<void> addChatUserByScan(Map qr_map) async {
+  /*
+   扫描加好友：进入队列中的消息都已经加密了
+   */
+  Future<void> addRequestChatUserByScan(Map qr_map) async {
     // 封装消息
     String send_deviceId = await UniqueDeviceId.getDeviceUuid();
     Map message = {
       "type": "REQUEST_SCAN_ADD_USER",
       "info": {
+        // 请求方
+        "type": "request", // 类型：request、response
+        "status": "wait", //状态: agree、disagree,wait
+        "confirm_key": Uuid().v1().toString(), // 握手确认消息秘钥，与request方在缓存中存储的该消息对比
         // 发送方：扫码方
-        "sender": {"id": send_deviceId, "username": qr_map["username"]},
+        "sender": {
+          "id": send_deviceId,
+          "username": qr_map["username"],
+          "avatar": "avatar url"
+        },
         // 接收方: 等待接受
-        "recipient": {"id": qr_map["deviceId"], "username": AppConfig.username},
+        "recipient": {
+          "id": qr_map["deviceId"],
+          "username": AppConfig.username,
+          "avatar": "avatar url"
+        },
         // 留言
         "content": qr_map["msg"] // 这个字段不是二维码扫描出的，而是用户自定义加上去的
       }
@@ -44,6 +59,10 @@ class Scan with Console {
     message["info"] = MessageEncrypte().encodeMessage(
         GlobalManager.appCache.getString("chat_secret").toString(),
         message["info"]);
+
+    // 存储在消息队列中
+    GlobalManager.offerUserAddQueue.enqueue(message);
+
     //发送消息
     try {
       print("message:$message");

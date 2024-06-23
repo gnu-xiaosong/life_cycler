@@ -276,7 +276,61 @@ server端响应
 		"deviceId": [],// 在线设备唯一性id list，不包括本机deviceId
 	}
 }
+
 ```
+
+##### server端主动广播在线的用户设计
+
+- 触发点: 有新用户连接或有用户断开
+
+- 函数设计：
+
+  server广播
+
+  ```dart
+   // 数据封装
+  Map msg = {
+      "type": "BROADCAST_INLINE_CLIENT",
+      "info": {"type": "list", "deviceIds": deviceIdList}
+  };
+  ```
+
+- 关键代码
+
+  ```dart
+    Future<void> receiveInlineClients() async {
+      print("******************处理从server接收到的在线client***********************");
+      // 1.获取deviceId 列表
+      List<String> deviceIdList = msgDataTypeMap["info"]["deviceIds"];
+      // 2.与数据库中对比:剔除一部分
+      List deviceIdListInDatabase = await userChat.selectAllUserChat();
+      Set<String> deviceIdList_set = deviceIdList.toSet();
+      Set<String> deviceIdListInDatabase_set =
+          deviceIdListInDatabase.map((e) => e.toString()).toSet();
+      // 集合取交集
+      Set<String> commonDeviceIds =
+          deviceIdList_set.intersection(deviceIdListInDatabase_set);
+      // 3.将其存入缓存中
+      List<String> commonList = commonDeviceIds.toList();
+      GlobalManager.appCache.setStringList("deviceId_list", commonList);
+      // 4.创建为每个clientObject对象，采用list存储
+      for (String deviceId in commonList) {
+        // 判断全局变量中是否存在该队列
+        if (!GlobalManager.userMapMsgQueue.containsKey("")) {
+          // 不存在，创建
+          GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
+        }
+      }
+  
+      printInfo("userMapMsgQueue count:${GlobalManager.userMapMsgQueue.length}");
+    }
+  ```
+
+  > 注: 根据该设计可知，以后聊天业务只需面向该map用户消息队列编程即可，便于解耦
+
+
+
+
 
 ##### 扫码加好友设计
 
@@ -290,10 +344,13 @@ server端响应
    {
        "type": "REQUEST_SCAN_ADD_USER",
        "info": {
+           "type":"", // 类型：request、response  请求方还是相应方
+           "status": "", //状态: agree、disagree,wait  消息状态，用于标识
+           "confirm_key": "确认秘钥", // 确认秘钥，用于验证相应方是否有效，
            // 发送方：扫码方
-           "sender": {"id": send_deviceId, "username": qr_map["username"]},
+           "sender": {"id": send_deviceId, "username": qr_map["username"], "avatar": “头像"},
            // 接收方: 等待接受
-           "recipient": {"id": qr_map["deviceId"], "username": AppConfig.username},
+           "recipient": {"id": qr_map["deviceId"], "username": AppConfig.username, "avatar": “头像"},
            // 留言
            "content": qr_map["msg"] // 这个字段不是二维码扫描出的，而是用户自定义加上去的
        }

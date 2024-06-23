@@ -5,10 +5,20 @@ import 'package:app_template/database/LocalStorage.dart';
 import 'package:app_template/database/daos/BaseDao.dart';
 import 'package:drift/drift.dart';
 import '../../manager/GlobalManager.dart';
+import '../../microService/chat/websocket/common/Console.dart';
 
-class UserDao implements BaseDao<User> {
+class UserDao extends BaseDao with Console {
   // 获取database单例
   LocalDatabase db = GlobalManager.database;
+
+  // 获取所有user
+  Future<List<User>> selectAllUsers() async {
+    // 构建查询
+    List<User> query = await (db.select(db.users)).get();
+
+    // 将查询结果转换为 User 的列表
+    return query;
+  }
 
   // 获取用户，分页查询，按时间查询
   Future<List> selectUserByPage(int page, int pageNum) {
@@ -35,9 +45,10 @@ class UserDao implements BaseDao<User> {
     try {
       await db.into(db.users).insert(usersCompanion);
       return true; // 插入成功，返回 true
-    } catch (e) {
-      print('插入用户失败: $e');
-      return false; // 插入失败，返回 false
+    } catch (e, stacktrace) {
+      printCatch("用户插入失败: $e");
+      printCatch("Stacktrace: $stacktrace");
+      return false;
     }
   }
 

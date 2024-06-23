@@ -138,6 +138,11 @@ class _MaterialApplicationState extends State<MaterialApplication>
   @override
   void initState() {
     super.initState();
+
+    // 在初始化前先设置context
+    print("this widget mounted: ${super.mounted}");
+    GlobalManager.context = context;
+
     WidgetsBinding.instance.addObserver(this);
   }
 

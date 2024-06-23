@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
+import 'package:app_template/microService/chat/websocket/common/ServerMessageModel.dart';
 import 'package:app_template/microService/chat/websocket/schedule/MessageQueueTask.dart';
 import '../../../common/WebsocketServer.dart';
 import '../../../manager/GlobalManager.dart';
@@ -49,8 +50,8 @@ class ChatWebsocketServer extends WebSocketServer with Console {
     printInfo(
         "缓存中剩余websocketObject数: ${GlobalManager.webscoketClientObjectList.length}");
 
-    // 调用父类的中断处理方法
-    // super.interruptHandler(request, webSocket);
+    // 广播client在线用户
+    ServerMessageModel().broadcastInlineClients();
   }
 
   /*

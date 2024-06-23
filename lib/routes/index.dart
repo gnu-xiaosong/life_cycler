@@ -23,6 +23,7 @@ Map<String, WidgetBuilder> routes = {
   "home": (context) => const MobileLayout1(), // home 页路由
   "introduce": (context) => Introduction1(), //介绍页路由
   "login": (context) => const Login(),
+  'chatPage': (context) => ChatPage(),
   "introductionAnimation": (context) =>
       const IntroductionAnimationScreen() //介绍页路由
 };

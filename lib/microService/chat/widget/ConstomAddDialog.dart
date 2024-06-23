@@ -127,9 +127,9 @@ class _CustomScanAddDialogState extends State<CustomScanAddDialog> {
                       "msg": controller.text,
                     };
                     print("msg: $qrMap");
-                    Scan().addChatUserByScan(qrMap);
+                    Scan().addRequestChatUserByScan(qrMap);
                     widget.controler_scan.start();
-                    Navigator.of(context).pop();
+                    // Navigator.of(context).pop();
                   },
                   icon: Icon(Icons.add, color: Colors.white),
                   label: Text(

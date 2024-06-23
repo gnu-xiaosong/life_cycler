@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:app_template/database/tables/ChatTable.dart';
 import 'package:app_template/database/tables/GroupTable.dart';
 import 'package:app_template/database/tables/UserGroupRelationsTable.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
@@ -43,10 +44,19 @@ LazyDatabase _openConnection() {
     // final dbFolder = await getExternalStorageDirectory();
     final file = File(p.join(dbFolder.path, '$dbname.sqlite'));
 
+    print("****************************数据库创建*******************************");
     print("db location:$file");
     if (Platform.isAndroid) {
       await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
     }
-    return NativeDatabase(file);
+
+    // 创建数据库连接
+    final database = NativeDatabase.createInBackground(file);
+
+    // 设置临时缓存目录
+    final cachebase = (await getTemporaryDirectory()).path;
+    sqlite3.tempDirectory = cachebase;
+
+    return database;
   });
 }

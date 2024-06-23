@@ -43,6 +43,8 @@ class GlobalManager {
   static MessageQueue clientWaitUserAgreeQueue = MessageQueue();
   // 8.设置全局buildcontext
   static late BuildContext context;
+  // 8.全局add user消息队列
+  static MessageQueue offerUserAddQueue = MessageQueue();
 
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 

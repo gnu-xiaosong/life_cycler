@@ -36,8 +36,6 @@ class _ChatListState extends State<ChatList> {
     super.initState();
     UserDao userDao = UserDao();
 
-    print("--------websocket-------");
-
     // 加载websocket
     GlobalManager().GlobalChatWebsocket.bootWebsocket();
     // 加载数据
@@ -179,6 +177,11 @@ class _ChatListState extends State<ChatList> {
             ],
           ),
           child: ListTile(
+            onTap: () {
+              // 点击跳转
+              Navigator.pushNamed(context, 'chatPage',
+                  arguments: item.deviceId.toString());
+            },
             leading: randomAvatar('saytoonz', height: 50, width: 50),
             subtitle: Text(item.createdAt),
             trailing: Text(item.id.toString()),

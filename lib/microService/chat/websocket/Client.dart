@@ -8,14 +8,16 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'common/ClientMessageHandlerByType.dart';
 import 'common/Console.dart';
 import 'common/MessageEncrypte.dart';
+import 'common/UserChat.dart';
 import 'common/tools.dart';
 import 'common/unique_device_id.dart';
 
 class ChatWebsocketClient extends WebsocketClient with Console {
   Tool tool = Tool();
-  MessageEncrypte messageEncrypte = MessageEncrypte();
   ClientMessageHandlerByType clientMessageHandlerByType =
       ClientMessageHandlerByType();
+  MessageEncrypte messageEncrypte = MessageEncrypte();
+  UserChat userChat = UserChat();
   /*
   client与server连接成功时
    */

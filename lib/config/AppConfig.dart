@@ -19,6 +19,7 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 import '../manager/ToolsManager.dart';
 import '../microService/chat/ChatList.dart';
 import '../microService/chat/ChatPage.dart';
+import '../microService/chat/PagePerson.dart';
 import '../pages/mobile/Page2.dart';
 import '../pages/mobile/Page3.dart';
 import '../../widgets/BottomNavigationBars/animated_notch_bottom_bar.dart';
@@ -156,7 +157,7 @@ class AppConfig extends ToolsManager {
       "page": const Page3(),
       "icon": Icons.browse_gallery
     },
-    {"name": "person".tr(), "page": ChatPage(), "icon": Icons.person}
+    {"name": "person".tr(), "page": const PagePerson(), "icon": Icons.person}
   ];
 
   // 底部导航栏样式

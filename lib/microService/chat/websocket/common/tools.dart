@@ -43,44 +43,6 @@ class Tool with Console {
     return digest.toString();
   }
 
-  //客户端接收消息处理函数
-  void handlerMessgae(msgDataTypeMap) {
-    // 信息为map类型
-    // print("--------------client消息处理函数-------------");
-    // 写入数据库中
-    // 消息
-    Map msgObj = msgDataTypeMap["info"];
-
-    // 1.实例化ChatDao事务操作类
-    ChatDao chatDao = ChatDao();
-
-    // 转为字符
-    msgObj["content"]["attachments"] =
-        msgObj["content"]["attachments"].toString();
-
-    // 写入页面缓存队列中：主要用于，用户页面显示消息取用，省去查询数据库耗时
-    String deviceId = msgObj["sender"]["id"]; // 来自发送方deviceId
-    GlobalManager.userMapMsgQueue[deviceId]!.enqueue(msgObj);
-
-    // 封装实体
-    ChatsCompanion chatsCompanion = ChatsCompanion(
-        senderId: msgObj["senderId"], //发送者ID,
-        senderUsername: msgObj["sender"]["username"], // 发送者用户名
-        senderAvatar: msgObj["sender"]["avatar"], // 发送者头像
-        recipientId: msgObj["recipient"]["id"], //接收者ID（对应user表的唯一id），群聊时为群号',
-        recipientType: msgObj["recipient"]["type"], //接收者类型
-        contentText: msgObj["content"]["text"], //文本内容',
-        contentAttachments: msgObj["content"]["attachments"], //附件列表',
-        timestamp: msgObj["timestamp"], //时间戳,
-        metadataMessageId: msgObj["metadata"]["messageId"], //消息ID',
-        //消息状态,消息状态，例如 sent, delivered, read
-        metadataStatus: msgObj["metadata"]["status"]);
-    // 写入数据库中
-    chatDao.insertChat(chatsCompanion).then((value) {
-      printInfo("+INFO: 插入消息结果:$value");
-    });
-  }
-
   // 根据deviceId设备ID获取对应于的clientObject对象
   ClientObject? getClientObjectByDeviceId(String deviceId) {
     // 遍历list
@@ -134,5 +96,21 @@ class Tool with Console {
     Map re = {"type": "ADD_USER", "deviceId": deviceId, "username": username};
 
     return re;
+  }
+
+  ClientObject getClientObject(HttpRequest request, WebSocket webSocket) {
+    late ClientObject clientObject;
+    for (ClientObject clientObject_item
+        in GlobalManager.webscoketClientObjectList) {
+      // 根据ip地址匹配查找
+      if (clientObject_item.ip ==
+              request.connectionInfo?.remoteAddress.address ||
+          clientObject_item.socket == webSocket) {
+        // 匹配成功
+        clientObject = clientObject_item;
+      }
+    }
+
+    return clientObject;
   }
 }

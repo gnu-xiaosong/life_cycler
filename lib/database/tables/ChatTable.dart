@@ -17,10 +17,12 @@ class Chats extends Table {
   TextColumn get recipientId => text()
       .withLength(min: 1, max: 50)
       .customConstraint('REFERENCES chats(id) ON DELETE CASCADE')
-      .nullable()(); // 接收者ID( 对影user表的唯一id),群聊时为群号
-  TextColumn get recipientType => text().withLength(min: 1, max: 20)(); // 接收者类型
+      .nullable()(); // 接收者ID( 对影user表的唯一设备ID),群聊时为群号
+  IntColumn get isGroup => integer()(); //是否为群聊： 0 不是 1 是
+  // 消息类型: audio,custom,file,image,system,text,unsupported,video
+  TextColumn get msgType => text().withLength(min: 1, max: 20)();
   TextColumn get contentText => text().withLength(min: 1, max: 255)(); // 文本内容
-  TextColumn get contentAttachments => text().nullable()(); // 附件列表
+  TextColumn get contentAttachments => text().nullable()(); // 附件列表,
   DateTimeColumn get timestamp => dateTime()(); // 时间戳
   TextColumn get metadataMessageId =>
       text().withLength(min: 1, max: 50)(); // 消息ID

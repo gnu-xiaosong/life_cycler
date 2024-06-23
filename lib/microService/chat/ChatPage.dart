@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:app_template/database/LocalStorage.dart';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:buttons_tabbar/buttons_tabbar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
@@ -8,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_chat_ui/flutter_chat_ui.dart' as FlutterChat;
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,6 +28,8 @@ import '../../config/AppConfig.dart';
 import '../../widgets/dropdowns/DropdownButton1.dart';
 import 'package:social_media_recorder/screen/social_media_recorder.dart';
 
+import 'model/ChatPageModel.dart';
+
 class ChatPage extends StatefulWidget {
   ChatPage({super.key}) {}
 
@@ -34,6 +38,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  ChatPageModel chatPageModel = ChatPageModel();
   // 存储消息的列表
   List<types.Message> _messages = [];
   // 当前用户
@@ -54,8 +59,103 @@ class _ChatPageState extends State<ChatPage> {
   bool _isText = false;
 
   @override
-  void initState() {
+  Widget build(BuildContext context) {
+    return DefaultSheetController(
+      child: Scaffold(
+        extendBody: true,
+        bottomNavigationBar: _BottomAppBar(),
+        appBar: AppBar(
+          // 设置背景色
+          backgroundColor: Colors.grey,
+          // 设置 icon 主题
+          iconTheme: IconThemeData(
+            // 颜色
+            color: Colors.blue,
+            // 不透明度
+            opacity: 0.5,
+          ),
+          // 标题居中
+          centerTitle: true,
+          // 标题左右间距为
+          leadingWidth: 50.sp,
+          //标题间隔
+          titleSpacing: 1,
+          //左边
+          leading: Builder(builder: (BuildContext context) {
+            return IconButton(
+                iconSize: 20.sp,
+                icon: const Icon(Icons.arrow_back_ios),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                });
+          }),
+          //标题--双标题
+          title: Column(children: [
+            Text(
+              AppConfig.appConfig['name'].toString().tr(),
+              style: const TextStyle(fontSize: 18),
+            ),
+            Text(
+              "我是小标题".tr(),
+              style: const TextStyle(fontSize: 10),
+            ),
+          ]),
+          //action（操作）right
+          actions: [
+            IconButton(
+              onPressed: () {
+                // customBackground(context);
+              },
+              icon: Icon(Icons.add),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.delete),
+            ),
+            DropdownButtonHideUnderline(
+              child: DropdownButton1(),
+            )
+          ],
+          // 自定义图标样式
+          actionsIconTheme: IconThemeData(
+            color: Colors.blue,
+          ),
+          shadowColor: Theme.of(context).shadowColor,
+          //灵活区域
+          flexibleSpace: SizedBox(
+              width: double.infinity, //无限
+              height: 160.h,
+              child: Container(
+                color: Colors.orange,
+              )),
+        ),
+        body: Stack(
+          children: [
+            FlutterChat.Chat(
+              messages: _messages, // 消息列表
+              onAttachmentPressed: _handleAttachmentPressed, // 附件按钮点击事件
+              onMessageTap: _handleMessageTap, // 消息点击事件
+              onPreviewDataFetched: _handlePreviewDataFetched, // 预览数据加载完成事件
+              onSendPressed: _handleSendPressed, // 发送按钮点击事件
+              showUserAvatars: true, // 显示用户头像
+              showUserNames: true, // 显示用户名
+              user: _user, // 当前用户
+              // 自定义底部菜单栏
+              customBottomWidget: chatBottom(),
+              bubbleBuilder: _bubbleBuilder,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> initState() async {
     super.initState();
+    // 接收页面传递过来的deviceId
+    String? deviceId = ModalRoute.of(context)?.settings.arguments.toString();
+
     // 添加监听器来监控焦点变化
     _focusNode.addListener(() {
       print("-------------focusNode------------------");
@@ -65,11 +165,12 @@ class _ChatPageState extends State<ChatPage> {
         print("TextField 失去焦点");
       }
     });
-    _loadMessages(); // 加载消息
+    _loadMessages(deviceId!); // 加载消息
   }
 
   // 添加消息到消息列表
   void _addMessage(types.Message message) {
+    // 添加进入数据库库
     setState(() {
       _messages.insert(0, message); // 将新消息插入到列表的开头
     });
@@ -254,108 +355,30 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // 加载消息
-  void _loadMessages() async {
+  void _loadMessages(String deviceId) async {
     // 从本地文件加载消息
     final response = await rootBundle.loadString('assets/messages.json');
     final messages = (jsonDecode(response) as List)
         .map((e) => types.Message.fromJson(e as Map<String, dynamic>))
         .toList();
 
+    // ********************************************************
+    print("获取到的deviceId: $deviceId");
+    // 本地deviceId
+    String myselfDeviceId = await UniqueDeviceId.getDeviceUuid();
+
+    // 从数据库中获取聊天信息
+    List<Chat> chatMessagesList =
+        (await chatPageModel.getUserChatMessagesByDeviceId(
+            userDeviceId: deviceId.toString(), myselfDeviceId: myselfDeviceId));
+    // 转换
+    _messages = chatPageModel.chatToMessageTypeList(chatMessagesList)
+        as List<types.Message>;
+
     setState(() {
       _messages = messages; // 更新消息列表
     });
   }
-
-  @override
-  Widget build(BuildContext context) => DefaultSheetController(
-        child: Scaffold(
-          extendBody: true,
-          bottomNavigationBar: _BottomAppBar(),
-          appBar: AppBar(
-            // 设置背景色
-            backgroundColor: Colors.grey,
-            // 设置 icon 主题
-            iconTheme: IconThemeData(
-              // 颜色
-              color: Colors.blue,
-              // 不透明度
-              opacity: 0.5,
-            ),
-            // 标题居中
-            centerTitle: true,
-            // 标题左右间距为
-            leadingWidth: 50.sp,
-            //标题间隔
-            titleSpacing: 1,
-            //左边
-            leading: Builder(builder: (BuildContext context) {
-              return IconButton(
-                  iconSize: 14.sp,
-                  icon: const Icon(Icons.arrow_back_ios),
-                  onPressed: () {
-                    print("open drawer");
-                    Scaffold.of(context).openDrawer();
-                  });
-            }),
-            //标题--双标题
-            title: Column(children: [
-              Text(
-                AppConfig.appConfig['name'].toString().tr(),
-                style: const TextStyle(fontSize: 18),
-              ),
-              Text(
-                "我是小标题".tr(),
-                style: const TextStyle(fontSize: 10),
-              ),
-            ]),
-            //action（操作）right
-            actions: [
-              IconButton(
-                onPressed: () {
-                  // customBackground(context);
-                },
-                icon: Icon(Icons.add),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.delete),
-              ),
-              DropdownButtonHideUnderline(
-                child: DropdownButton1(),
-              )
-            ],
-            // 自定义图标样式
-            actionsIconTheme: IconThemeData(
-              color: Colors.blue,
-            ),
-            shadowColor: Theme.of(context).shadowColor,
-            //灵活区域
-            flexibleSpace: SizedBox(
-                width: double.infinity, //无限
-                height: 160.h,
-                child: Container(
-                  color: Colors.orange,
-                )),
-          ),
-          body: Stack(
-            children: [
-              Chat(
-                messages: _messages, // 消息列表
-                onAttachmentPressed: _handleAttachmentPressed, // 附件按钮点击事件
-                onMessageTap: _handleMessageTap, // 消息点击事件
-                onPreviewDataFetched: _handlePreviewDataFetched, // 预览数据加载完成事件
-                onSendPressed: _handleSendPressed, // 发送按钮点击事件
-                showUserAvatars: true, // 显示用户头像
-                showUserNames: true, // 显示用户名
-                user: _user, // 当前用户
-                // 自定义底部菜单栏
-                customBottomWidget: chatBottom(),
-                bubbleBuilder: _bubbleBuilder,
-              ),
-            ],
-          ),
-        ),
-      );
 
   Widget _bubbleBuilder(
     Widget child, {

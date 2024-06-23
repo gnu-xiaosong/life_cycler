@@ -55,49 +55,29 @@ class TextEncryption with Console {
 
 class TextEncryptionForJson with Console {
   String decryptString(String encryptedText, int shift, String key) {
-    String decodedTextWithoutKey = "";
+    String decodedTextWithoutKey = '';
     try {
       String decodedText = '';
       for (int i = 0; i < encryptedText.length; i++) {
         int charCode = encryptedText.codeUnitAt(i);
-
-        // Only shift letters, keep other characters unchanged
-        if (charCode >= 65 && charCode <= 90) {
-          decodedText +=
-              String.fromCharCode((charCode - 65 + 26 - shift) % 26 + 65);
-        } else if (charCode >= 97 && charCode <= 122) {
-          decodedText +=
-              String.fromCharCode((charCode - 97 + 26 - shift) % 26 + 97);
-        } else {
-          decodedText += encryptedText[i];
-        }
+        decodedText += String.fromCharCode((charCode - shift + 256) % 256);
       }
       decodedTextWithoutKey =
           utf8.decode(base64.decode(decodedText)).replaceAll(key, '');
     } catch (e) {
       print("Error: Unrecognized encrypted character! ${e.toString()}");
     }
-
     return decodedTextWithoutKey;
   }
 
-// Function to encrypt a single string
+//Function to encrypt a single string
   String encryptString(String plainText, int shift, String key) {
     String encodedText = base64.encode(utf8.encode(plainText + key));
     String encryptedText = '';
     for (int i = 0; i < encodedText.length; i++) {
       int charCode = encodedText.codeUnitAt(i);
-
-      // Only shift letters, keep other characters unchanged
-      if (charCode >= 65 && charCode <= 90) {
-        encryptedText += String.fromCharCode((charCode - 65 + shift) % 26 + 65);
-      } else if (charCode >= 97 && charCode <= 122) {
-        encryptedText += String.fromCharCode((charCode - 97 + shift) % 26 + 97);
-      } else {
-        encryptedText += encodedText[i];
-      }
+      encryptedText += String.fromCharCode((charCode + shift) % 256);
     }
-
     return encryptedText;
   }
 
