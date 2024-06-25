@@ -1,28 +1,20 @@
-/*
-desc: 定义数据库表结构:聊天信息表
- */
 import 'package:drift/drift.dart';
 
 // 定义聊天表
 @DataClassName('Chat')
 class Chats extends Table {
   IntColumn get id => integer().autoIncrement()(); // 自增主键
-  TextColumn get senderId => text()
-      .withLength(min: 1, max: 50)
-      .customConstraint('REFERENCES chats(id) ON DELETE CASCADE')
-      .nullable()(); // 发送者ID
+  TextColumn get senderId =>
+      text().withLength(min: 1, max: 50).nullable()(); // 发送者ID
   TextColumn get senderUsername =>
       text().withLength(min: 1, max: 50)(); // 发送者用户名
   TextColumn get senderAvatar => text().nullable()(); // 发送者头像
-  TextColumn get recipientId => text()
-      .withLength(min: 1, max: 50)
-      .customConstraint('REFERENCES chats(id) ON DELETE CASCADE')
-      .nullable()(); // 接收者ID( 对影user表的唯一设备ID),群聊时为群号
-  IntColumn get isGroup => integer()(); //是否为群聊： 0 不是 1 是
-  // 消息类型: audio,custom,file,image,system,text,unsupported,video
-  TextColumn get msgType => text().withLength(min: 1, max: 20)();
-  TextColumn get contentText => text().withLength(min: 1, max: 255)(); // 文本内容
-  TextColumn get contentAttachments => text().nullable()(); // 附件列表,
+  TextColumn get recipientId =>
+      text().withLength(min: 1, max: 50).nullable()(); // 接收者ID
+  IntColumn get isGroup => integer()(); // 是否为群聊： 0 不是 1 是
+  TextColumn get msgType => text().withLength(min: 1, max: 20)(); // 消息类型
+  TextColumn get contentText => text().withLength(min: 1, max: 1000)(); // 文本内容
+  TextColumn get contentAttachments => text().nullable()(); // 附件列表
   DateTimeColumn get timestamp => dateTime()(); // 时间戳
   TextColumn get metadataMessageId =>
       text().withLength(min: 1, max: 50)(); // 消息ID

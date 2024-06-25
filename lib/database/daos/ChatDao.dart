@@ -31,9 +31,6 @@ class ChatDao implements BaseDao<Chat> {
 
   // 插入聊天信息
   Future<dynamic> insertChat(ChatsCompanion chatsCompanion) async {
-    // 获取database单例
-    var db = GlobalManager.database;
-
     // 构建
     final result = await db.into(db.chats).insert(chatsCompanion);
 

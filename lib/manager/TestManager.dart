@@ -37,7 +37,8 @@ class TestManager with Console {
     // 实例化DAO
     UserDao userDao = UserDao();
     List testUsers = [
-      {"deviceId": "b23d70ea-a5f4-542e-b7d2-59e6dfbb89e6", "username": '小米手机'},
+      {"deviceId": "b643f058-6863-5662-92c2-2db852aa7c96", "username": '虚拟机'},
+      // {"deviceId": "b23d70ea-a5f4-542e-b7d2-59e6dfbb89e6", "username": '小米手机'},
       {"deviceId": "f453f6df-3677-540c-b27f-1d855492cfaa", "username": '小松科技'},
     ];
     try {

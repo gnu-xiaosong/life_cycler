@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:app_template/common/WebsocketClient.dart';
 import 'package:app_template/manager/GlobalManager.dart';
-import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import '../../../config/AppConfig.dart';
 import 'common/ClientMessageHandlerByType.dart';
 import 'common/Console.dart';
 import 'common/MessageEncrypte.dart';
@@ -104,29 +103,52 @@ class ChatWebsocketClient extends WebsocketClient with Console {
   send方法:该方法负责客户端的chat消息发送函数
    */
   bool sendMessage(
-      {Map recipient = const {"id": "all", "type": "group"},
-      Map sender = const {"username": "发送者用户名", "avatar": "发送者头像（可选）"},
-      Map content = const {"text": "Hello, World!", "attachments": []},
-      String time = ""}) {
+      {required String recipientId,
+      String? groupOruser,
+      required String contentText,
+      String? timestamp,
+      String? username,
+      String? senderId,
+      String? avatar,
+      Map metadata = const {
+        "messageId": "msg123",
+        // 消息的唯一标识符
+        "status": "sent" // 消息状态，例如 sent, delivered, read
+      },
+      List<Map> attachments = const [
+        // 附件列表，如图片、文件等（可选）
+        {
+          "type": "image",
+          "url": "https://example.com/image.jpg",
+          "name": "image.jpg"
+        }
+      ]}) {
     Map msg = {
       "type": "MESSAGE",
+      // 消息类型
       "info": {
         "sender": {
-          "id": UniqueDeviceId.getDeviceUuid(),
-          "username": sender["username"],
-          "avatar": sender["avatar"],
+          "id": senderId ??
+              UniqueDeviceId.getDeviceUuid().toString(), // , // 设备唯一标识
+          // 发送者的唯一标识符
+          "username": username ?? AppConfig.username, //,
+          // 发送者用户名
+          "avatar": avatar ?? "avatar" // 发送者头像（可选）
         },
         "recipient": {
-          "id": recipient["id"],
-          "type": recipient["type"],
+          "id": recipientId, // 私聊设备唯一标识,群聊为群号
+          "type": groupOruser ?? "user" //接收者类型，例如 group 表示群组消息，user 表示私聊消息
         },
-        "content": content,
-        "timestamp": time ?? DateTime.now().toString(),
-        "metadata": {
-          "messageId": Uuid().v1(),
-          "status": "sent",
+        "content": {
+          "text": contentText,
+          // 文本消息内容
+          "attachments": attachments
         },
-      },
+        // 消息发送时间戳
+        "timestamp": timestamp ?? DateTime.now().toString(),
+        // 数据元
+        "metadata": metadata
+      }
     };
 
     String secret = GlobalManager.appCache.getString("chat_secret") ?? "";

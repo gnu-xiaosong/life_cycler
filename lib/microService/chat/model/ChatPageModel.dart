@@ -7,10 +7,13 @@ import 'package:drift/drift.dart';
 import '../../../database/LocalStorage.dart';
 import '../../../database/daos/ChatDao.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import '../websocket/Client.dart';
+import '../websocket/common/MessageEncrypte.dart';
 import '../websocket/common/unique_device_id.dart';
 
-class ChatPageModel {
+class ChatPageModel extends ChatWebsocketClient {
   ChatDao chatDao = ChatDao();
+  MessageEncrypte messageEncrypte = MessageEncrypte();
 
   /*
   格式转换: Chat 转 Message
@@ -105,7 +108,8 @@ class ChatPageModel {
         // 查询参数
         senderId: Value(userDeviceId),
         recipientId: Value(myselfDeviceId),
-        msgType: 'recipientType');
+        msgType: 'recipientType',
+        isGroup: 0);
     // 查询数据库
     List<Chat> chatMsgList =
         await chatDao.selectChatMessagesByDeviceId(chatsCompanion);

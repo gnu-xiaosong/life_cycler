@@ -503,8 +503,7 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       additionalChecks:
           GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
       type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: 'REFERENCES chats(id) ON DELETE CASCADE');
+      requiredDuringInsert: false);
   static const VerificationMeta _senderUsernameMeta =
       const VerificationMeta('senderUsername');
   @override
@@ -528,8 +527,13 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       additionalChecks:
           GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
       type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: 'REFERENCES chats(id) ON DELETE CASCADE');
+      requiredDuringInsert: false);
+  static const VerificationMeta _isGroupMeta =
+      const VerificationMeta('isGroup');
+  @override
+  late final GeneratedColumn<int> isGroup = GeneratedColumn<int>(
+      'is_group', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   static const VerificationMeta _msgTypeMeta =
       const VerificationMeta('msgType');
   @override
@@ -544,8 +548,8 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
   @override
   late final GeneratedColumn<String> contentText = GeneratedColumn<String>(
       'content_text', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 255),
+      additionalChecks: GeneratedColumn.checkTextLength(
+          minTextLength: 1, maxTextLength: 1000),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
   static const VerificationMeta _contentAttachmentsMeta =
@@ -585,6 +589,7 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
         senderUsername,
         senderAvatar,
         recipientId,
+        isGroup,
         msgType,
         contentText,
         contentAttachments,
@@ -628,6 +633,12 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
           _recipientIdMeta,
           recipientId.isAcceptableOrUnknown(
               data['recipient_id']!, _recipientIdMeta));
+    }
+    if (data.containsKey('is_group')) {
+      context.handle(_isGroupMeta,
+          isGroup.isAcceptableOrUnknown(data['is_group']!, _isGroupMeta));
+    } else if (isInserting) {
+      context.missing(_isGroupMeta);
     }
     if (data.containsKey('msg_type')) {
       context.handle(_msgTypeMeta,
@@ -690,6 +701,8 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
           .read(DriftSqlType.string, data['${effectivePrefix}sender_avatar']),
       recipientId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}recipient_id']),
+      isGroup: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}is_group'])!,
       msgType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}msg_type'])!,
       contentText: attachedDatabase.typeMapping
@@ -717,6 +730,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   final String senderUsername;
   final String? senderAvatar;
   final String? recipientId;
+  final int isGroup;
   final String msgType;
   final String contentText;
   final String? contentAttachments;
@@ -729,6 +743,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       required this.senderUsername,
       this.senderAvatar,
       this.recipientId,
+      required this.isGroup,
       required this.msgType,
       required this.contentText,
       this.contentAttachments,
@@ -749,6 +764,7 @@ class Chat extends DataClass implements Insertable<Chat> {
     if (!nullToAbsent || recipientId != null) {
       map['recipient_id'] = Variable<String>(recipientId);
     }
+    map['is_group'] = Variable<int>(isGroup);
     map['msg_type'] = Variable<String>(msgType);
     map['content_text'] = Variable<String>(contentText);
     if (!nullToAbsent || contentAttachments != null) {
@@ -773,6 +789,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       recipientId: recipientId == null && nullToAbsent
           ? const Value.absent()
           : Value(recipientId),
+      isGroup: Value(isGroup),
       msgType: Value(msgType),
       contentText: Value(contentText),
       contentAttachments: contentAttachments == null && nullToAbsent
@@ -793,6 +810,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       senderUsername: serializer.fromJson<String>(json['senderUsername']),
       senderAvatar: serializer.fromJson<String?>(json['senderAvatar']),
       recipientId: serializer.fromJson<String?>(json['recipientId']),
+      isGroup: serializer.fromJson<int>(json['isGroup']),
       msgType: serializer.fromJson<String>(json['msgType']),
       contentText: serializer.fromJson<String>(json['contentText']),
       contentAttachments:
@@ -811,6 +829,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       'senderUsername': serializer.toJson<String>(senderUsername),
       'senderAvatar': serializer.toJson<String?>(senderAvatar),
       'recipientId': serializer.toJson<String?>(recipientId),
+      'isGroup': serializer.toJson<int>(isGroup),
       'msgType': serializer.toJson<String>(msgType),
       'contentText': serializer.toJson<String>(contentText),
       'contentAttachments': serializer.toJson<String?>(contentAttachments),
@@ -826,6 +845,7 @@ class Chat extends DataClass implements Insertable<Chat> {
           String? senderUsername,
           Value<String?> senderAvatar = const Value.absent(),
           Value<String?> recipientId = const Value.absent(),
+          int? isGroup,
           String? msgType,
           String? contentText,
           Value<String?> contentAttachments = const Value.absent(),
@@ -839,6 +859,7 @@ class Chat extends DataClass implements Insertable<Chat> {
         senderAvatar:
             senderAvatar.present ? senderAvatar.value : this.senderAvatar,
         recipientId: recipientId.present ? recipientId.value : this.recipientId,
+        isGroup: isGroup ?? this.isGroup,
         msgType: msgType ?? this.msgType,
         contentText: contentText ?? this.contentText,
         contentAttachments: contentAttachments.present
@@ -856,6 +877,7 @@ class Chat extends DataClass implements Insertable<Chat> {
           ..write('senderUsername: $senderUsername, ')
           ..write('senderAvatar: $senderAvatar, ')
           ..write('recipientId: $recipientId, ')
+          ..write('isGroup: $isGroup, ')
           ..write('msgType: $msgType, ')
           ..write('contentText: $contentText, ')
           ..write('contentAttachments: $contentAttachments, ')
@@ -873,6 +895,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       senderUsername,
       senderAvatar,
       recipientId,
+      isGroup,
       msgType,
       contentText,
       contentAttachments,
@@ -888,6 +911,7 @@ class Chat extends DataClass implements Insertable<Chat> {
           other.senderUsername == this.senderUsername &&
           other.senderAvatar == this.senderAvatar &&
           other.recipientId == this.recipientId &&
+          other.isGroup == this.isGroup &&
           other.msgType == this.msgType &&
           other.contentText == this.contentText &&
           other.contentAttachments == this.contentAttachments &&
@@ -902,6 +926,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   final Value<String> senderUsername;
   final Value<String?> senderAvatar;
   final Value<String?> recipientId;
+  final Value<int> isGroup;
   final Value<String> msgType;
   final Value<String> contentText;
   final Value<String?> contentAttachments;
@@ -914,6 +939,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     this.senderUsername = const Value.absent(),
     this.senderAvatar = const Value.absent(),
     this.recipientId = const Value.absent(),
+    this.isGroup = const Value.absent(),
     this.msgType = const Value.absent(),
     this.contentText = const Value.absent(),
     this.contentAttachments = const Value.absent(),
@@ -927,6 +953,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     required String senderUsername,
     this.senderAvatar = const Value.absent(),
     this.recipientId = const Value.absent(),
+    required int isGroup,
     required String msgType,
     required String contentText,
     this.contentAttachments = const Value.absent(),
@@ -934,6 +961,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     required String metadataMessageId,
     required String metadataStatus,
   })  : senderUsername = Value(senderUsername),
+        isGroup = Value(isGroup),
         msgType = Value(msgType),
         contentText = Value(contentText),
         timestamp = Value(timestamp),
@@ -945,6 +973,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     Expression<String>? senderUsername,
     Expression<String>? senderAvatar,
     Expression<String>? recipientId,
+    Expression<int>? isGroup,
     Expression<String>? msgType,
     Expression<String>? contentText,
     Expression<String>? contentAttachments,
@@ -958,6 +987,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       if (senderUsername != null) 'sender_username': senderUsername,
       if (senderAvatar != null) 'sender_avatar': senderAvatar,
       if (recipientId != null) 'recipient_id': recipientId,
+      if (isGroup != null) 'is_group': isGroup,
       if (msgType != null) 'msg_type': msgType,
       if (contentText != null) 'content_text': contentText,
       if (contentAttachments != null) 'content_attachments': contentAttachments,
@@ -973,6 +1003,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       Value<String>? senderUsername,
       Value<String?>? senderAvatar,
       Value<String?>? recipientId,
+      Value<int>? isGroup,
       Value<String>? msgType,
       Value<String>? contentText,
       Value<String?>? contentAttachments,
@@ -985,6 +1016,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       senderUsername: senderUsername ?? this.senderUsername,
       senderAvatar: senderAvatar ?? this.senderAvatar,
       recipientId: recipientId ?? this.recipientId,
+      isGroup: isGroup ?? this.isGroup,
       msgType: msgType ?? this.msgType,
       contentText: contentText ?? this.contentText,
       contentAttachments: contentAttachments ?? this.contentAttachments,
@@ -1011,6 +1043,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     }
     if (recipientId.present) {
       map['recipient_id'] = Variable<String>(recipientId.value);
+    }
+    if (isGroup.present) {
+      map['is_group'] = Variable<int>(isGroup.value);
     }
     if (msgType.present) {
       map['msg_type'] = Variable<String>(msgType.value);
@@ -1041,6 +1076,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
           ..write('senderUsername: $senderUsername, ')
           ..write('senderAvatar: $senderAvatar, ')
           ..write('recipientId: $recipientId, ')
+          ..write('isGroup: $isGroup, ')
           ..write('msgType: $msgType, ')
           ..write('contentText: $contentText, ')
           ..write('contentAttachments: $contentAttachments, ')

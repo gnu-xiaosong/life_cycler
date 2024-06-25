@@ -122,7 +122,12 @@ class ServerMessageModel with Console {
     bool secret_auth = tool.clientAuth(
         msgDataTypeMap?["info"]["sender"]["id"], request, webSocket);
 
+    printWarn("MESSAGE: $msgDataTypeMap");
     if (secret_auth) {
+      //// 判断client是否为server端，分别进行处理
+      //******************start:处理client端为server时逻辑**********************
+
+      //******************start:处理client端为server时逻辑**********************
       // 2.如果认证成功，将该消息添加进client的消息队列中
       GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
         if (websocketClientObj.socket == webSocket ||
@@ -154,9 +159,7 @@ class ServerMessageModel with Console {
       printSuccess(">> send:$re");
       // 发送
       webSocket.add(json.encode(re));
-      // 3.2 主动关闭该不信任的client客户端
-      webSocket.close();
-      // 3.3 更改该client的状态
+      // 3.2 更改该client的状态
       GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
         if (websocketClientObj.socket == webSocket ||
             request.connectionInfo?.remoteAddress.address ==
@@ -172,6 +175,8 @@ class ServerMessageModel with Console {
           return websocketClientObj;
         }
       });
+      // 3.3 主动关闭该不信任的client客户端
+      webSocket.close();
     }
   }
 

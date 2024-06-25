@@ -47,6 +47,7 @@ class Tool with Console {
   ClientObject? getClientObjectByDeviceId(String deviceId) {
     // 遍历list
     for (ClientObject clientObject in GlobalManager.webscoketClientObjectList) {
+      print(clientObject.deviceId);
       if (clientObject.deviceId == deviceId) return clientObject;
     }
     return null;

@@ -133,6 +133,9 @@ class ChatWebsocketManager with Console {
         printSuccess("启动client成功!");
       } catch (e) {
         printCatch("启动client失败!more detail:$e");
+      } finally {
+        // 全局
+        GlobalManager.chatWebsocketClient = chatWebsocketClient;
       }
     }
   }

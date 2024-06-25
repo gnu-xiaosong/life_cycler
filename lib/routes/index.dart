@@ -10,8 +10,7 @@ import 'package:app_template/pages/logins/default/index/index.dart';
 import 'package:flutter/material.dart';
 //导入layout文件
 import '../Layouts/mobile/MobileLayout1.dart';
-import '../microService/chat/ChatPage.dart';
-import '../microService/chat/widget/AddUserQr.dart';
+import '../microService/chat/pages/chat/ChatPage.dart';
 import '../pages/Introduction/introduction2/introduction_animation_screen.dart';
 import '../pages/adaptive/Home.dart';
 
