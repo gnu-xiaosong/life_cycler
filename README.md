@@ -445,19 +445,33 @@ server端响应
 
 ##### 方案
 
-- **方案一**: 本地重启一个client客户端实例，server与client服务分离
+- **方案一**(目前方案): 本地重启一个client客户端实例，server与client服务分离
 
   好处： 有力减少server与client的耦合，跟有利于分别维护server与client的代码，
 
   缺点:  增加server的中心设备的性能压力，不太推荐
 
-- **方案二**: 共用server的websokcet，但是需要修改部分代码，这里需要设计server与client的桥接通道类
+- **方案二**(推荐,后续方案): 共用server的websokcet，但是需要修改部分代码，这里需要设计server与client的桥接通道类
 
   好处: 只需要利用server的websocket与client的通讯，有力较少其中心设备的能耗
 
   坏处: 其造成server与client代码交织在一起，耦合性强
 
-- 
+  > 解决方法: 通过合理的代码设计有力较少server与client的代码耦合性
+
+​		通过重写![image-20240625163025566](project/README/image-20240625163025566.png)
+
+**要点：**
+
+1. 消息不需要加解密
+2. 采用原client基础上通过判断的方式
+3. 
+
+​		
+
+
+
+
 
 ## 系统架构
 
