@@ -6,7 +6,7 @@ import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'ClientMessageModel.dart';
-import 'MessageEncrypte.dart';
+import '../common/MessageEncrypte.dart';
 
 class ClientMessageHandlerByType extends Tool with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
@@ -69,6 +69,8 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
+
+      print("解密: $msgDataTypeMap");
       // 处理server广播得到的在线client
       clientMessageModel.msgDataTypeMap = msgDataTypeMap;
       clientMessageModel.receiveInlineClients();

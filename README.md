@@ -218,8 +218,8 @@ server端返回
 ```json
 {
 	"type": "MESSAGE",
-	// 消息类型，如 message, join, leave, typing, etc.
 	"info": {
+        "msgType": "text", // 消息类型: text,file,link......
 		"sender": {
 			"id": "user123",// 设备唯一标识
 			// 发送者的唯一标识符
@@ -445,11 +445,13 @@ server端响应
 
 ##### 方案
 
-- **方案一**(目前方案): 本地重启一个client客户端实例，server与client服务分离
+- **方案一**(**目前方案**): 本地重启一个client客户端实例，server与client服务分离
 
-  好处： 有力减少server与client的耦合，跟有利于分别维护server与client的代码，
+  好处： 有力减少server与client的耦合，跟有利于分别维护server与client的代码，简单
 
   缺点:  增加server的中心设备的性能压力，不太推荐
+
+  <img src="project/README/image-20240625172607076.png" alt="image-20240625172607076" style="zoom:50%;" />
 
 - **方案二**(推荐,后续方案): 共用server的websokcet，但是需要修改部分代码，这里需要设计server与client的桥接通道类
 
@@ -470,6 +472,21 @@ server端响应
 ​		
 
 
+
+## 进度计划
+
+- [ ] 通讯项目暂时停止：等待另外一部手机来测试
+- [ ] 目前任务点或难点
+
+1. 如何解决设备作为server端时，如何承担client的任务
+2. 数据库插入测试验证：扫码加好友、发送信息接收更新显示、表情打开、图片与文件类型等显示
+
+以上暂时搁置，接下来开发其他模块应用
+
+- [ ] 密码本
+- [ ] 记账本
+- [ ] 待办事项
+- [ ] 打卡事务
 
 
 

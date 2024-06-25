@@ -16,6 +16,41 @@ class ChatPageModel extends ChatWebsocketClient {
   MessageEncrypte messageEncrypte = MessageEncrypte();
 
   /*
+   封装chat页面的message数据: 明文
+   */
+  messageInChat(Map message) {
+    // 消息类型
+    String msgType = message["info"]["msgType"];
+    // 发送者
+    final _user = types.User(
+      id: message["info"]["sender"]["id"].toString(), // 唯一用户 ID
+    );
+    late final _message;
+    // 判断消息的类型:根据不同的消息类型对消息进行封装
+    if (msgType == "text") {
+      // 文本消息
+      _message = types.TextMessage(
+          // 发送者
+          author: _user,
+          //消息id
+          id: message["info"]["metadata"]["messageId"].toString(),
+          // 文本
+          text: message["info"]["content"]["text"].toString(),
+          // 发送时间
+          createdAt: int.parse(message["info"]["timestamp"]) ??
+              DateTime.now().millisecondsSinceEpoch,
+          // 数据元: Map<String, dynamic>
+          metadata: message["info"]["metadata"]);
+    } else if (msgType == "file") {
+      // 文件消息类型
+    } else {
+      // 默认未识别消息类型
+    }
+
+    return _message;
+  }
+
+  /*
   格式转换: Chat 转 Message
    */
   Future<List<types.Message>> chatToMessageTypeList(List<Chat> chatList) async {

@@ -4,7 +4,7 @@ import 'package:app_template/manager/GlobalManager.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import '../../../config/AppConfig.dart';
-import 'common/ClientMessageHandlerByType.dart';
+import 'model/ClientMessageHandlerByType.dart';
 import 'common/Console.dart';
 import 'common/MessageEncrypte.dart';
 import 'common/UserChat.dart';
@@ -110,6 +110,7 @@ class ChatWebsocketClient extends WebsocketClient with Console {
       String? username,
       String? senderId,
       String? avatar,
+      String? msgType,
       Map metadata = const {
         "messageId": "msg123",
         // 消息的唯一标识符
@@ -125,8 +126,8 @@ class ChatWebsocketClient extends WebsocketClient with Console {
       ]}) {
     Map msg = {
       "type": "MESSAGE",
-      // 消息类型
       "info": {
+        "msgType": msgType ?? "text", // 消息类型: text,file,link......
         "sender": {
           "id": senderId ??
               UniqueDeviceId.getDeviceUuid().toString(), // , // 设备唯一标识

@@ -6,7 +6,7 @@
  * @Description: 全局管理器工具类
  */
 import 'dart:convert';
-import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart';
+import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart' as types;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/LocalStorage.dart';
 import '../microService/chat/websocket/Client.dart';
 import '../microService/chat/websocket/model/ClientObject.dart';
-import '../microService/chat/websocket/model/OffLineMessageQueue.dart';
+import '../microService/chat/websocket/schedule/OffLineMessageQueue.dart';
 import '../microService/chat/websocket/schedule/UserSchedule.dart';
 import '../models/index.dart';
 //HttpManager管理工具类
@@ -48,9 +48,7 @@ class GlobalManager {
   static late BuildContext context;
   // 8.全局add user消息队列
   static MessageQueue offerUserAddQueue = MessageQueue();
-  // 9.全局聊天消息存储
-  static List<types.Message> GloablMessageList = [];
-  // 10.全局chatWebsocketClient
+  // 9.全局chatWebsocketClient
   static ChatWebsocketClient? chatWebsocketClient;
 
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/

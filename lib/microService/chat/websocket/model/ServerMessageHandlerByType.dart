@@ -9,11 +9,11 @@ import 'package:app_template/microService/chat/websocket/common/secret.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import '../../../../manager/GlobalManager.dart';
-import '../model/ClientObject.dart';
-import 'MessageEncrypte.dart';
-import 'OffLineHandler.dart';
+import 'ClientObject.dart';
+import '../common/MessageEncrypte.dart';
+import '../schedule/OffLineHandler.dart';
 import 'ServerMessageModel.dart';
-import 'WaitAgreeUserAddClientHandler.dart';
+import '../schedule/WaitAgreeUserAddClientHandler.dart';
 
 class ServerMessageHandlerByType with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();

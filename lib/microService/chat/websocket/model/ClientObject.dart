@@ -2,7 +2,7 @@
   websocket client实体对象
  */
 import 'dart:io';
-import 'MessageQueue.dart';
+import '../schedule/MessageQueue.dart';
 
 class ClientObject {
   // 唯一标识client客户端基于设备的ID

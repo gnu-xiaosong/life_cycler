@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
-import 'package:app_template/microService/chat/websocket/common/ServerMessageModel.dart';
+import 'package:app_template/microService/chat/websocket/model/ServerMessageModel.dart';
 import 'package:app_template/microService/chat/websocket/schedule/MessageQueueTask.dart';
 import '../../../common/WebsocketServer.dart';
 import '../../../manager/GlobalManager.dart';
-import 'common/ServerMessageHandlerByType.dart';
+import 'model/ServerMessageHandlerByType.dart';
 import 'common/tools.dart';
 
 class ChatWebsocketServer extends WebSocketServer with Console {

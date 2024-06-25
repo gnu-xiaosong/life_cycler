@@ -2,17 +2,20 @@
 client不同消息类型处理模块
  */
 
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart';
+import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import '../../../../database/LocalStorage.dart';
 import '../../../../database/daos/ChatDao.dart';
 import '../../../../database/daos/UserDao.dart';
 import '../../../../manager/GlobalManager.dart';
 import 'ClientModel.dart';
-import 'Console.dart';
-import 'MessageEncrypte.dart';
-import 'UserChat.dart';
+import '../common/Console.dart';
+import '../common/MessageEncrypte.dart';
+import '../common/UserChat.dart';
 
 class ClientMessageModel with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
@@ -25,8 +28,12 @@ class ClientMessageModel with Console {
    */
   Future<void> receiveInlineClients() async {
     print("******************处理从server接收到的在线client***********************");
+    print(msgDataTypeMap);
     // 1.获取deviceId 列表
-    List<String> deviceIdList = msgDataTypeMap["info"]["deviceIds"];
+    List<dynamic> dynamicDeviceIdList = msgDataTypeMap["info"]["deviceIds"];
+    List<String> deviceIdList =
+        dynamicDeviceIdList.map((e) => e.toString()).toList();
+
     // 2.与数据库中对比:剔除一部分
     List deviceIdListInDatabase = await userChat.selectAllUserChat();
     Set<String> deviceIdList_set = deviceIdList.toSet();
@@ -41,12 +48,12 @@ class ClientMessageModel with Console {
     // 4.创建为每个clientObject对象，采用list存储
     for (String deviceId in commonList) {
       // 判断全局变量中是否存在该队列
-      if (!GlobalManager.userMapMsgQueue.containsKey("")) {
+      if (!GlobalManager.userMapMsgQueue.containsKey(deviceId)) {
         // 不存在，创建
         GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
       }
     }
-
+    printInfo("client chat user msg queue: ${GlobalManager.userMapMsgQueue}");
     printInfo("userMapMsgQueue count:${GlobalManager.userMapMsgQueue.length}");
   }
 
@@ -185,51 +192,40 @@ class ClientMessageModel with Console {
   }
 
   /*
-    消息类型
+    消息类型:已解密
    */
   void message() {
     printInfo("--------------MESSAGE TASK HANDLER--------------------");
-    // 调用消息处理函数
-    handlerMessgae(msgDataTypeMap);
-    //***********************Message Type  Handler*******************************
-  }
-
-  //客户端接收消息处理函数
-  void handlerMessgae(msgDataTypeMap) {
-    // 信息为map类型
-    // print("--------------client消息处理函数-------------");
-    // 写入数据库中
-    // 消息
-    Map msgObj = msgDataTypeMap["info"];
-
     // 1.实例化ChatDao事务操作类
     ChatDao chatDao = ChatDao();
 
-    // 转为字符
-    msgObj["content"]["attachments"] =
-        msgObj["content"]["attachments"].toString();
+    // 写入数据库
+    Map msgObj = msgDataTypeMap["info"];
+
+    // 封装实体
+    ChatsCompanion chatsCompanion = ChatsCompanion.insert(
+      senderId: Value(msgObj["sender"]["id"]),
+      senderUsername: msgObj["sender"]["username"],
+      msgType: msgObj["msgType"],
+      contentText: msgObj["content"]["text"],
+      timestamp:
+          DateTime.fromMillisecondsSinceEpoch(int.parse(msgObj["timestamp"])) ??
+              DateTime.now(),
+      metadataMessageId: msgObj["metadata"]["messageId"],
+      //消息状态,消息状态，例如 sent, delivered, read
+      metadataStatus: msgObj["metadata"]["status"],
+      isGroup: msgObj["recipient"]["type"] == "user" ? 0 : 1,
+      senderAvatar: Value(msgObj["sender"]["avatar"]), // 发送者头像
+      recipientId:
+          Value(msgObj["recipient"]["id"]), //接收者ID（对应user表的唯一id），群聊时为群号',
+      contentAttachments:
+          Value(json.encode(msgObj["content"]["attachments"])), //附件列表',
+    );
+    chatDao.insertChat(chatsCompanion);
 
     // 写入页面缓存队列中：主要用于，用户页面显示消息取用，省去查询数据库耗时
     String deviceId = msgObj["sender"]["id"]; // 来自发送方deviceId
     GlobalManager.userMapMsgQueue[deviceId]!.enqueue(msgObj);
-
-    // 封装实体
-    ChatsCompanion chatsCompanion = ChatsCompanion(
-        senderId: msgObj["senderId"], //发送者ID,
-        senderUsername: msgObj["sender"]["username"], // 发送者用户名
-        senderAvatar: msgObj["sender"]["avatar"], // 发送者头像
-        recipientId: msgObj["recipient"]["id"], //接收者ID（对应user表的唯一id），群聊时为群号',
-        msgType: msgObj["recipient"]["type"], //接收者类型
-        contentText: msgObj["content"]["text"], //文本内容',
-        contentAttachments: msgObj["content"]["attachments"], //附件列表',
-        timestamp: msgObj["timestamp"], //时间戳,
-        metadataMessageId: msgObj["metadata"]["messageId"], //消息ID',
-        //消息状态,消息状态，例如 sent, delivered, read
-        metadataStatus: msgObj["metadata"]["status"]);
-    // 写入数据库中
-    chatDao.insertChat(chatsCompanion).then((value) {
-      printInfo("+INFO: 插入消息结果:$value");
-    });
   }
 
   /*

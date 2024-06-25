@@ -25,6 +25,7 @@ import '../../../../../config/AppConfig.dart';
 import '../../../../../database/LocalStorage.dart';
 import '../../../model/ChatPageModel.dart';
 import '../../../websocket/common/unique_device_id.dart';
+import '../../../websocket/schedule/MessageQueue.dart';
 import 'chatBubbleBuilder.dart';
 import 'package:http/http.dart' as http;
 
@@ -36,13 +37,16 @@ class chatView extends StatefulWidget {
 }
 
 class _chatViewState extends State<chatView> {
+  // 获取该roomId对应的消息队列
+  late final MessageQueue? _messageQueue;
+
   // 存储消息的列表
   List<types.Message> _messages = [];
   ChatPageModel chatPageModel = ChatPageModel();
   ChatDao chatDao = ChatDao();
 
-// 当前用户
-  final _user = const types.User(
+  //当前用户
+  var _user = const types.User(
     id: '82091008-a484-4a89-ae75-a22bf8d6f3ac', // 唯一用户 ID
   );
 // 底部可变高度
@@ -805,13 +809,44 @@ class _chatViewState extends State<chatView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    //
+    // 获取路由传递过来的roomId
     deviceId = ModalRoute.of(context)!.settings.arguments.toString();
+    // 设置mesgQueue
+    _messageQueue = GlobalManager.userMapMsgQueue[deviceId];
+    // 设置监听
+    _messageQueue?.stream?.listen((message) {
+      print("监听到消息队列变化,新增消息message: $message");
+      // 这里监听队列变化进行相应的执行操作
+      /// 1. 封装接收方的message
+      final addMessage = chatPageModel.messageInChat(message);
+
+      /// 2. 添加数据
+      setState(() {
+        _messages.insert(0, addMessage); // 将新消息插入到列表的开头
+      });
+    });
+  }
+
+  getDeviceId() async {
+    deviceId = await UniqueDeviceId.getDeviceUuid();
+    if (deviceId != null) {
+      // 不为空
+      _user = types.User(
+        id: deviceId.toString(), // 唯一用户 ID
+      );
+    } else {
+      // 为空
+      _user = const types.User(
+        id: '82091008-a484-4a89-ae75-a22bf8d6f3ac', // 唯一用户 ID
+      );
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    // 获取deviceId
+    getDeviceId();
     // 添加监听器来监控焦点变化
     _focusNode.addListener(() {
       print("-------------focusNode------------------");

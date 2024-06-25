@@ -8,11 +8,11 @@ import 'package:app_template/microService/chat/websocket/common/secret.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import '../../../../manager/GlobalManager.dart';
-import '../model/ClientObject.dart';
-import 'Console.dart';
-import 'MessageEncrypte.dart';
-import 'OffLineHandler.dart';
-import 'WaitAgreeUserAddClientHandler.dart';
+import 'ClientObject.dart';
+import '../common/Console.dart';
+import '../common/MessageEncrypte.dart';
+import '../schedule/OffLineHandler.dart';
+import '../schedule/WaitAgreeUserAddClientHandler.dart';
 
 class ServerMessageModel with Console {
   Map? msgDataTypeMap;
@@ -124,17 +124,16 @@ class ServerMessageModel with Console {
 
     printWarn("MESSAGE: $msgDataTypeMap");
     if (secret_auth) {
-      //// 判断client是否为server端，分别进行处理
-      //******************start:处理client端为server时逻辑**********************
-
-      //******************start:处理client端为server时逻辑**********************
       // 2.如果认证成功，将该消息添加进client的消息队列中
-      GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
+      print("ip: ${request.connectionInfo?.remoteAddress.address}");
+      print("length:${GlobalManager.webscoketClientObjectList.length}");
+      GlobalManager.webscoketClientObjectList =
+          GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
+        // print("weboscket: ${websocketClientObj.ip}");
         if (websocketClientObj.socket == webSocket ||
             request.connectionInfo?.remoteAddress.address ==
                 websocketClientObj.ip) {
-          printInfo(
-              "----------------中断处理：找到了目标websocket------------------------");
+          printInfo("----------------中断处理：找到了目标websocket----------------");
           // 算法加密
           msgDataTypeMap?["info"] = messageEncrypte.encodeMessage(
               websocketClientObj.secret, msgDataTypeMap?["info"]);
@@ -146,7 +145,7 @@ class ServerMessageModel with Console {
           // 返回原来的
           return websocketClientObj;
         }
-      });
+      }).toList();
     } else {
       // 3.1 认证失败返回数据相应给客户端
       Map re = {

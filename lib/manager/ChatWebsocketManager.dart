@@ -115,28 +115,39 @@ class ChatWebsocketManager with Console {
     // 2.启动对用的socket
     if (isServer) {
       // 启动server
-      // 实例化WebSocketServer
       chatWebsocketServer?.ip = AppConfig.ip;
       chatWebsocketServer?.port = AppConfig.port;
       // 启动server
       chatWebsocketServer?.start();
       // 将是否是server的结果发送回主线程
       printSuccess("启动server成功!");
+
+      //**************启动一个client本地websocket服务***********
+      rebootClientServer("127.0.0.1");
+      //*****************************************************
     } else {
       // 启动client
-      chatWebsocketClient.ip = _ip;
-      chatWebsocketClient.port = AppConfig.port;
-      // 连接
-      try {
-        chatWebsocketClient.connnect();
-        // 将是否是server的结果发送回主线程
-        printSuccess("启动client成功!");
-      } catch (e) {
-        printCatch("启动client失败!more detail:$e");
-      } finally {
-        // 全局
-        GlobalManager.chatWebsocketClient = chatWebsocketClient;
-      }
+      rebootClientServer(_ip);
+    }
+  }
+
+  /*
+  启动client服务websocket
+   */
+  rebootClientServer(String ip) {
+    // 启动client
+    chatWebsocketClient.ip = ip;
+    chatWebsocketClient.port = AppConfig.port;
+    // 连接
+    try {
+      chatWebsocketClient.connnect();
+      // 将是否是server的结果发送回主线程
+      printSuccess("启动client成功!");
+    } catch (e) {
+      printCatch("启动client失败!more detail:$e");
+    } finally {
+      // 全局
+      GlobalManager.chatWebsocketClient = chatWebsocketClient;
     }
   }
 
