@@ -12,11 +12,12 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart' as types;
 import 'package:shared_preferences/shared_preferences.dart';
 
 //应用配置信息
-import '../database/LocalStorage.dart';
+import '../database/LocalStorage.dart' hide Task;
 import '../microService/chat/websocket/Client.dart';
 import '../microService/chat/websocket/model/ClientObject.dart';
 import '../microService/chat/websocket/schedule/OffLineMessageQueue.dart';
 import '../microService/chat/websocket/schedule/UserSchedule.dart';
+import '../microService/taskSchedule/common/Task.dart';
 import '../models/index.dart';
 //HttpManager管理工具类
 //本地通知管理
@@ -50,6 +51,8 @@ class GlobalManager {
   static MessageQueue offerUserAddQueue = MessageQueue();
   // 9.全局chatWebsocketClient
   static ChatWebsocketClient? chatWebsocketClient;
+  // 10. task全局变量
+  static Task task = Task();
 
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 

@@ -488,6 +488,345 @@ server端响应
 - [ ] 待办事项
 - [ ] 打卡事务
 
+## 任务计划app设计与开发
+
+两个页面：
+
+- 首页：展示当日的任务清单展示
+- 待办日历：用于展示任务计划的时间跨度等信息，便于查询
+
+数据结构设计
+
+分出实体：待办任务、具体日、
+
+#### 数据存储设计
+
+###### ![image-20240626235825673](project/README/image-20240626235825673.png)
+
+###### 数据库设计
+
+- **任务表Tasks**
+
+  | 字段名                  | 类型   | 说明                                                         |
+  | ----------------------- | ------ | ------------------------------------------------------------ |
+  | 任务ID(taskID)          | String | 保证ID其唯一性                                               |
+  | 用户ID(userID)          | String | 本地存储时不重要                                             |
+  | 任务名(name)            | String | 用户自定义                                                   |
+  | 标签(label)             | String | 多个标签时用\|分割开                                         |
+  | 分类(category)          | String | 该分类根据用户自定义的进行分类，与分类表关联                 |
+  | 描述(description)       | text   | 用户自定义描述                                               |
+  | 级别(priority)          | string | 三个级别:low  medium high                                    |
+  | 状态(status)            | string | 三个状态: pending(待定)、in progress(进行中)、completed（完成） |
+  | 创建时间(createAt)      | Date   |                                                              |
+  | 更新时间（updateAt）    | Date   |                                                              |
+  | 开始执行时间(startTime) | Date   |                                                              |
+  | 结束执行时间(endTime)   | Date   |                                                              |
+
+  drift代码实现
+
+  ```dart
+  class Tasks extends Table {
+    IntColumn get id => integer().autoIncrement()();  // 自增id字段
+    TextColumn get taskId => text().customConstraint('UNIQUE')();  // 任务ID，保证唯一性
+    TextColumn get userId => text().nullable()();  // 用户ID，本地存储时不重要
+    TextColumn get name => text().withLength(min: 1, max: 255)();  // 任务名，用户自定义
+    TextColumn get label => text().nullable()();  // 标签，多个标签用 | 分割
+    TextColumn get category => text().nullable()();  // 分类，根据用户自定义的进行分类
+    TextColumn get description => text().nullable()();  // 描述，用户自定义描述
+    TextColumn get priority => text().withLength(min: 1, max: 10)();  // 级别，三个级别: low, medium, high
+    TextColumn get status => text().withLength(min: 1, max: 15)();  // 状态，三个状态: pending（待定）、in progress（进行中）、completed（完成）
+    DateTimeColumn get createAt => dateTime().nullable()();  // 创建时间
+    DateTimeColumn get updateAt => dateTime().nullable()();  // 更新时间
+    DateTimeColumn get startTime => dateTime().nullable()();  // 开始执行时间
+    DateTimeColumn get endTime => dateTime().nullable()();  // 结束执行时间
+  
+    @override
+    Set<Column> get primaryKey => {id};
+  }
+  ```
+
+###### 文件存储设计
+
+- 文件名规定：***task_{taskId}*.json**    对应任务表Tasks中的**name字段**名
+
+- json结构设计:
+
+  ```json
+  {
+     "taskID":"对应任务的taskID",
+     "taskName":"对应的task名",
+     "data": [// 其中data为数组形式，每个item为Map对象，对应该任务的每日待办事项
+    		{
+    		  "todoID": "待办事项的唯一ID",
+      	  "name":"事项名",
+      	  "description": "描述",
+    		  "createAt": "创建时间", // 以毫秒整数进行存储
+    		  "updateAt": "更新时间", // 以毫秒整数进行存储
+    		  "duration": "待办事项时长", // 该优先级低于下面的严格执行时间点
+    		  "startTime": "开始执行时间", // 以毫秒整数进行存储
+    		  "endTime": "结束时间", // 以毫秒整数进行存储
+    		// 从开始之日起记录每日该todo的完成情况(只记录执行的，没执行的日期不记录)，按时间顺序依次往下
+    		  "executiveLog":[
+    		  	{
+    		  	   "time":"该日的时间",// 只需记录到年月日即可
+    		  	   "duration": "完成待办事项时长",   // 分钟整数
+                 "startTime": "执行待办事项开始时间", // 以毫秒整数进行存储
+                 "endTime": "执行待办事项结束时间", // 以毫秒整数进行存储
+                 "status": "", // 完成情况: giveUp(主动放弃) completed(完成) interrupt(中断，指任务已进行但为100%完成只是完成部分)
+                 "tip": "", // 用户标记: 主要给用户提供比如情绪等标记
+                 "notes":"" // 用户记录：猪腰提供给用户在完成该任务或其他情况需要用户自定义该日todo事项的说明与记录
+    		  	},
+    		  	......该todo其他日期.........
+    		  ]
+    		},
+    		..........其他todo...........
+    ]
+  }
+  ```
+
+#### 代码设计
+
+##### 系统设计(架构设计)
+
+<img src="project/README/image-20240627011849493.png" alt="image-20240627011849493" style="zoom: 80%;" />
+
+##### UI页面设计
+
+![image-20240627145428409](project/README/image-20240627145428409.png)
+
+##### 模型设计
+
+![image-20240704031022528](project/README/image-20240704031022528.png)
+
+
+
+##### 目录结构
+
+```markdown
+├─module          ---------业务逻辑模块
+├─page			  ---------页面	
+├─widget		  ---------组件
+└─main.dart		  ---------入口
+```
+
+##### 所需技术栈(技术攻关点)
+
+- [x] 数据库sqlite： 主要为创建数据库表
+
+  采用drift本地可持续化
+
+  **核心代码：**
+
+  - 定义数据库表
+
+    ```dart
+    class Tasks extends Table {
+      IntColumn get id => integer().autoIncrement()();  // 自增id字段
+      TextColumn get taskId => text().customConstraint('UNIQUE')();  // 任务ID，保证唯一性
+      TextColumn get userId => text().nullable()();  // 用户ID，本地存储时不重要
+      TextColumn get name => text().withLength(min: 1, max: 255)();  // 任务名，用户自定义
+      TextColumn get label => text().nullable()();  // 标签，多个标签用 | 分割
+      TextColumn get category => text().nullable()();  // 分类，根据用户自定义的进行分类
+      TextColumn get description => text().nullable()();  // 描述，用户自定义描述
+      TextColumn get priority => text().withLength(min: 1, max: 10)();  // 级别，三个级别: low, medium, high
+      TextColumn get status => text().withLength(min: 1, max: 15)();  // 状态，三个状态: pending（待定）、in progress（进行中）、completed（完成）
+      DateTimeColumn get createAt => dateTime().nullable()();  // 创建时间
+      DateTimeColumn get updateAt => dateTime().nullable()();  // 更新时间
+      DateTimeColumn get startTime => dateTime().nullable()();  // 开始执行时间
+      DateTimeColumn get endTime => dateTime().nullable()();  // 结束执行时间
+    
+      @override
+      Set<Column> get primaryKey => {id};
+    }
+    ```
+
+  - 执行生成的数据库表的命令:
+
+    ```shell
+    flutter pub run build_runner build
+    ```
+
+  - 编写对应DAO：文件名**TaskDao.dart**
+
+    ```dart
+    /*
+    desc: TaskDao类DAO操作: DAO类集中管理 CRUD 操作
+    */
+    import 'package:app_template/database/LocalStorage.dart';
+    import 'package:app_template/database/daos/BaseDao.dart';
+    import 'package:drift/drift.dart';
+    import '../../manager/GlobalManager.dart';
+    import '../../microService/chat/websocket/common/Console.dart';
+    
+    class TaskDao extends BaseDao with Console {
+    
+    
+      // 获取所有任务task
+      Future<List<Task>> selectAllTasks() async {
+        // 构建查询
+        List<User> query = await (db.select(db.tasks)).get();
+    
+        // 将查询结果转换为 User 的列表
+        return query;
+      }
+       
+    
+      // 获取任务task，分页查询，按时间查询
+      Future<List> selectTaskByPage(int page, int pageNum) {
+        /*
+          page: 页面 1,2.。。。
+          pageNum: 每页数量
+         */
+        final offset = (page - 1) * pageNum;
+        // 构建查询
+        final query = (db.select(db.tasks)
+              ..orderBy([
+                (t) =>
+                    OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)
+              ])
+              ..limit(pageNum, offset: offset))
+            .get();
+    
+        // 将查询结果转换为 Task 的列表
+        return query;
+      }
+    
+      // 插入任务task数据
+      Future<bool> insertTask(TasksCompanion tasksCompanion) async {
+        try {
+          await db.into(db.tasks).insert(tasksCompanion);
+          return true; // 插入成功，返回 true
+        } catch (e, stacktrace) {
+          printCatch("用户插入失败: $e");
+          printCatch("Stacktrace: $stacktrace");
+          return false;
+        }
+      }
+    
+      // 更新task数据
+      updateTask(TasksCompanion tasksCompanion) async {
+        int result = 0;
+        await db.update(db.tasks)
+          ..where((tbl) => tbl.id.equals(tasksCompanion.taskId))
+          ..write(usersCompanion).then((value) {
+            print("update result: $value");
+            result = value;
+          });
+    
+        return result;
+      }
+    
+      // 删除数据
+      int deleteTask(TasksCompanion tasksCompanion) {
+        // 删除条数
+        int result = 0;
+        db.delete(db.tasks)
+          ..where((tbl) => tbl.id.equals(tasksCompanion.taskId))
+          ..go().then((value) {
+            print("delete data count: $value");
+            result = value;
+          });
+    
+        return result;
+      }
+    }
+    ```
+
+- [ ] 本地文件操作：读取与写入更新等，主要设计到**json读取和文件存储位置**
+
+  技术栈选型:
+
+  - 文件操作类库：**文件监听库推荐watcher** 用法https://github.com/dart-lang/watcher/blob/master/example/watch.dart
+
+    利用path_provider库获取应用数据存储目录：
+
+    ```
+    // 获取应用数据存储目录路径
+    final Directory appDocumentsDir = await getApplicationDocumentsDirectory();
+    
+    // 在该目录下创建tasks目录用于存储对应的json文件: 采用name_plus库
+    Directory('path').namePlus('filename'); // 同步
+    Directory('path').namePlusSync('filename');// 异步
+    
+    // 创建json文件
+    File('path').namePlus('filename');// 同步
+    File('path').namePlusSync('filename');// 异步
+    ```
+
+  - json文件读取与写入操作库：
+
+    读取并解析json
+
+    ```dart
+    // 采用deep_pick类库进行json的解析：这里采用Pick deep nested values without parsing all objects in between
+    
+    final String? version = pick(json, 'meta', 'version', 'commit').asStringOrNull();
+    ```
+
+    写入json文件并存储
+
+    ```dart
+     // 读取文件
+      final file = File('path/to/your/file.json');
+      if (!await file.exists()) {
+        print('文件不存在');
+        return;
+      }
+      final contents = await file.readAsString();
+      
+      // 解析JSON数据
+      Map<String, dynamic> jsonData = jsonDecode(contents);
+    
+      // 修改JSON数据中的值
+      jsonData['key'] = 'newValue';
+    
+      // 将修改后的JSON数据写回文件
+      await file.writeAsString(jsonEncode(jsonData));
+      
+      print('JSON文件已成功修改并保存');
+    ```
+
+- [ ] 定时任务：核心
+
+  - 后台执行任务库：workmanager 或者flutter_background_service(推荐)
+
+    与cron配合共同执行
+
+  - 定时任务执行库:   cron
+
+    定时任务主要执行逻辑为：主要从事todo待办事项的任务开始结束时的提醒工作（只是提醒不参与todo的执行时长任务,交由用户UI交互执行)：比如利用flutter_local_notifications或者用户自设定的提醒方式
+
+- [ ] 功能拓展设计
+
+  - 通过用户设定的提醒闹钟：利用插件android_alarm_manager_plus
+  
+  主要考验代码编写的解耦如何，每个功能模块各自独立
+
+#### 项目执行规划（先完成基本雏形，再后续新增完善与修正）
+
+1. 业务需求分析与梳理
+2. 系统设计
+3. 项目实施
+   - [ ] 目录创建: 创建上述设计好的目录
+   - [ ] 数据库创建：主要用到定义数据库表、执行创建数据表命令、编写对应表的DAO数据库操作逻辑
+   - [ ] 编写页面UI：主要在page和widget目录进行
+   - [ ] 编写对应的页面的业务功能模块：主要在module目录进行
+   - [ ] 整合
+4. 调试与测试，反馈自1步骤循环进行不断修正
+5. 整合与部署
+
+
+
+#### 项目执行日志记录
+
+- 2024.7.5 增加新增taskUI
+
+  <img src="project/README/image-20240705165121487.png" alt="image-20240705165121487" style="zoom:33%;" />
+
+
+
+
+
 
 
 ## 系统架构

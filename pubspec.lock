@@ -1453,6 +1453,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.1.0"
+  name_plus:
+    dependency: "direct main"
+    description:
+      name: name_plus
+      sha256: "3928c8f4368a3537d9a44a22e94507e5f4e8aac4871086cfbb2e5227d5fe71c9"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.3"
   native_auth:
     dependency: "direct main"
     description:
@@ -1614,7 +1622,7 @@ packages:
     source: hosted
     version: "2.2.1"
   permission_handler:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: permission_handler
       sha256: "18bf33f7fefbd812f37e72091a15575e72d5318854877e0e4035a24ac1113ecb"
@@ -1781,6 +1789,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.0"
+  radial_button:
+    dependency: "direct main"
+    description:
+      name: radial_button
+      sha256: bc6c95753611ebc07c723f18817c03366ef286bc86f66adb76d2cd2f59925f34
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.1"
   random_avatar:
     dependency: "direct main"
     description:
@@ -1869,6 +1885,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.2.2"
+  rxdart:
+    dependency: transitive
+    description:
+      name: rxdart
+      sha256: "0c7c0cedd93788d996e33041ffecda924cc54389199cde4e6a34b440f50044cb"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.27.7"
   safe_device:
     dependency: "direct main"
     description:

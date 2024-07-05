@@ -23,10 +23,8 @@ import '../pages/mobile/Page2.dart';
 import '../pages/mobile/Page3.dart';
 import '../../widgets/BottomNavigationBars/animated_notch_bottom_bar.dart';
 import '../../widgets/BottomNavigationBars/bottom_navigation_bar_1.dart';
-import '../../widgets/BottomNavigationBars/bubble_bottom_bar.dart';
 import '../../widgets/BottomNavigationBars/convex_bottom_bar.dart';
 import '../../widgets/BottomNavigationBars/curved_navigation_bar.dart';
-import '../../widgets/BottomNavigationBars/fancy_bottom_navigation.dart';
 import '../../widgets/BottomNavigationBars/flutter_snake_navigationbar.dart';
 import '../../widgets/BottomNavigationBars/water_drop_nav_bar.dart';
 //tabs view
@@ -167,8 +165,8 @@ class AppConfig extends ToolsManager {
     animated_notch_bottom_bar,
     water_drop_nav_bar,
     convex_bottom_bar,
-    bubble_bottom_bar,
-    fancy_bottom_navigation,
+    // bubble_bottom_bar,
+    // fancy_bottom_navigation,
     curved_navigation_bar,
     bottom_navigation_bar_1,
     bottom_bar_with_sheet,
