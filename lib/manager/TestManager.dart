@@ -18,7 +18,7 @@ class TestManager with Console {
   static void debug() {
     print("------------------debug task test-----------");
     // 调试ADO
-    testADO();
+    // testADO();
   }
 
   //http返回数据打印输出

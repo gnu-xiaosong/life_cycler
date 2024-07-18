@@ -50,7 +50,7 @@ class ChatWebsocketServer extends WebSocketServer with Console {
     printInfo(
         "缓存中剩余websocketObject数: ${GlobalManager.webscoketClientObjectList.length}");
 
-    // 广播client在线用户
+    // 广播client在线用户: 注意数据解密
     ServerMessageModel().broadcastInlineClients();
   }
 

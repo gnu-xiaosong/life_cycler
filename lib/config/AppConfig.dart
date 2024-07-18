@@ -19,6 +19,8 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 import '../manager/ToolsManager.dart';
 import '../microService/chat/pages/home/ChatList.dart';
 import '../microService/chat/pages/person/PagePerson.dart';
+import '../microService/taskSchedule/page/AddTask.dart';
+import '../microService/taskSchedule/page/WorkStation.dart';
 import '../pages/mobile/Page2.dart';
 import '../pages/mobile/Page3.dart';
 import '../../widgets/BottomNavigationBars/animated_notch_bottom_bar.dart';
@@ -148,13 +150,13 @@ class AppConfig extends ToolsManager {
       "page": const ChatList(),
       "icon": Icons.chat_bubble_outlined
     },
-    {"name": "shopping".tr(), "page": const Page2(), "icon": Icons.shop},
+    {"name": "shopping".tr(), "page": const WorkStation(), "icon": Icons.shop},
     {
       "name": "browse".tr(),
       "page": const Page3(),
       "icon": Icons.browse_gallery
     },
-    {"name": "person".tr(), "page": const PagePerson(), "icon": Icons.person}
+    {"name": "person".tr(), "page": AddTaskPage(), "icon": Icons.person}
   ];
 
   // 底部导航栏样式

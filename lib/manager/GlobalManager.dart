@@ -52,8 +52,8 @@ class GlobalManager {
   // 9.全局chatWebsocketClient
   static ChatWebsocketClient? chatWebsocketClient;
   // 10. task全局变量
-  static Task task = Task();
-
+  static TaskModel task = TaskModel();
+  static int taskTodoSecond = 0;
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 
   /****************↓↓↓↓↓↓工具类初始化操作↓↓↓↓↓↓↓**********************/

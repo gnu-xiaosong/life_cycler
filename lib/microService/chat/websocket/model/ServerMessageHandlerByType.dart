@@ -20,7 +20,6 @@ class ServerMessageHandlerByType with Console {
   // 消息类型
   late Map msgDataTypeMap;
   Tool tool = Tool();
-
   ServerMessageModel serverMessageModel = ServerMessageModel();
 
   // 消息处理函数
@@ -49,7 +48,7 @@ class ServerMessageHandlerByType with Console {
       serverMessageModel.msgDataTypeMap = msgDataTypeMap;
       serverMessageModel.auth(request, webSocket);
       // 广播在线client用户数
-      ServerMessageModel().broadcastInlineClients();
+      serverMessageModel.broadcastInlineClients();
     } else if (msgDataTypeMap["type"] == "MESSAGE") {
       // 获取websoket对应的ClientObject对象
       ClientObject clientObject = tool.getClientObject(request, webSocket);
@@ -69,7 +68,7 @@ class ServerMessageHandlerByType with Console {
           clientObject.secret, msgDataTypeMap["info"]);
       // 请求在线用户
       serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.requestInlineClient(request, webSocket);
+      serverMessageModel.handleRequestInlineClients(request, webSocket);
     } else if (msgDataTypeMap["type"] == "REQUEST_SCAN_ADD_USER") {
       printInfo("-------------REQUEST_SCAN_ADD_USER-----------------");
 

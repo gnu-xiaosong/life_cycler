@@ -4,6 +4,7 @@ client不同消息类型处理模块
 
 import 'dart:convert';
 
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:drift/drift.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
@@ -27,16 +28,21 @@ class ClientMessageModel with Console {
   处理server端广播得到的在线client用户
    */
   Future<void> receiveInlineClients() async {
-    print("******************处理从server接收到的在线client***********************");
-    print(msgDataTypeMap);
+    printSuccess(
+        "******************处理从server接收到的在线client***********************");
+
+    print("local deviceId: ${await UniqueDeviceId.getDeviceUuid()}");
     // 1.获取deviceId 列表
     List<dynamic> dynamicDeviceIdList = msgDataTypeMap["info"]["deviceIds"];
+    printWarn("server user:${dynamicDeviceIdList}");
     List<String> deviceIdList =
         dynamicDeviceIdList.map((e) => e.toString()).toList();
 
     // 2.与数据库中对比:剔除一部分
-    List deviceIdListInDatabase = await userChat.selectAllUserChat();
-    Set<String> deviceIdList_set = deviceIdList.toSet();
+    List deviceIdListInDatabase =
+        await userChat.selectAllUserDeviceIdChat(); //获取数据库中所有user的DeviceId
+    printWarn("database user:${deviceIdListInDatabase}");
+    Set<String> deviceIdList_set = deviceIdList.toSet(); //转化为集合
     Set<String> deviceIdListInDatabase_set =
         deviceIdListInDatabase.map((e) => e.toString()).toSet();
     // 集合取交集
@@ -44,7 +50,8 @@ class ClientMessageModel with Console {
         deviceIdList_set.intersection(deviceIdListInDatabase_set);
     // 3.将其存入缓存中
     List<String> commonList = commonDeviceIds.toList();
-    GlobalManager.appCache.setStringList("deviceId_list", commonList);
+    GlobalManager.appCache.setStringList("inline_deviceId_list", commonList);
+    printSuccess("commonList: ${commonList}");
     // 4.创建为每个clientObject对象，采用list存储
     for (String deviceId in commonList) {
       // 判断全局变量中是否存在该队列
@@ -69,21 +76,24 @@ class ClientMessageModel with Console {
 
     // 判断请求类型: request or response
     if (msgDataTypeMap['info']["type"] == "request") {
-      // 请求方处理逻辑
+      // 来自请求方处理逻辑: 接收方
       printInfo('Handling request type'); // 处理请求类型
       await clientModel.addUserMsgQueue(msgDataTypeMap); // 将消息添加到待同意好友消息队列中
-      await clientModel.test(); // 异步执行测试函数
+      await clientModel.replayAddStatus(); // 异步执行测试函数
     } else {
-      // 响应方处理逻辑
-      printInfo('Handling response type'); // 处理响应类型
+      // 来自响应方处理逻辑: 扫码方
+      printInfo(
+          '****************Handling response type*********************'); // 处理响应类型
       String status = msgDataTypeMap['info']["status"]; // 获取响应状态
       printInfo('Response status: $status'); // 打印响应状态
 
+      // 同意好友请求
       if (status == "agree") {
         // 解密秘钥
         String? secret = await GlobalManager.appCache.getString("chat_secret");
         printInfo('User agreed'); // 对方已同意
         int count = GlobalManager.clientWaitUserAgreeQueue.length; // 获取消息队列数
+        print("clientWaitUserAgreeQueue length: ${count}");
         while (count-- > 0) {
           // 取出等待同意消息，进行解密
           Map? messageQueue =
@@ -100,11 +110,14 @@ class ClientMessageModel with Console {
             printInfo(
                 'Matching confirm_key found, adding user chat'); // 匹配 confirm_key 成功
             try {
-              print("-------------------there--------------------------");
+              printInfo(
+                  "-----%%%%--------------handling the response for add user by scan -------------%%%%%%%-------------");
+              // 添加进数据库
               userChat.addUserChat(
                   msgDataTypeMap?["info"]["recipient"]["id"],
                   msgDataTypeMap?["info"]["recipient"]["avatar"],
                   msgDataTypeMap?["info"]["recipient"]["username"]);
+              printSuccess("user add to database is successful!");
             } catch (e) {
               printCatch(
                   "add user insert to database failure! more detail: $e");
@@ -114,26 +127,53 @@ class ClientMessageModel with Console {
           }
         }
       } else if (status == "disagree") {
+        // 同意好友请求拒绝
         printWarn("Other user disagreed"); // 对方拒绝
       } else {
+        // 同意好友请求
         printWarn("Other user is waiting"); // 处于等待
       }
     }
   }
 
   /*
-   处理server在线client用户
+  发送消息给server以响应请求方scan扫码添加好友的请求
+   */
+  // sendMsgToServerResponseScanRequest(Map msgDataTypeMap) {
+  //   // 修改关键数据
+  //   msgDataTypeMap["info"]["type"] = "response";
+  //   late Map temp;
+  //   temp = msgDataTypeMap["info"]["sender"];
+  //   msgDataTypeMap["info"]["sender"] = msgDataTypeMap["info"]["recipient"];
+  //   msgDataTypeMap["info"]["recipient"] = temp;
+  //
+  //   // 加密
+  //   msgDataTypeMap["info"] = MessageEncrypte().encodeMessage(
+  //       GlobalManager.appCache.getString("chat_secret").toString(),
+  //       msgDataTypeMap["info"]);
+  //
+  //   // 发送
+  //   GlobalManager()
+  //       .GlobalChatWebsocket
+  //       .chatWebsocketClient
+  //       .send(json.encode(msgDataTypeMap));
+  // }
+
+  /*
+   处理server在线client用户:调用即可
    */
   void requestInlineClient() {
+    printSuccess(
+        "*****************requestInlineClient***************************");
     // 1.获取deviceId 列表
     List<String> deviceIdList = msgDataTypeMap["info"]["deviceId"];
     // 2.将其存入缓存中
     GlobalManager.appCache.setStringList("deviceId_list", deviceIdList);
     // 3.创建为每个clientObject对象，采用list存储
-    deviceIdList.map((deviceId) {
+    for (String deviceId in deviceIdList) {
       // 为每个deviceId设置一个全局的消息队列
       GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
-    });
+    }
     printInfo("userMapMsgQueue:${GlobalManager.userMapMsgQueue}");
   }
 
@@ -208,9 +248,7 @@ class ClientMessageModel with Console {
       senderUsername: msgObj["sender"]["username"],
       msgType: msgObj["msgType"],
       contentText: msgObj["content"]["text"],
-      timestamp:
-          DateTime.fromMillisecondsSinceEpoch(int.parse(msgObj["timestamp"])) ??
-              DateTime.now(),
+      timestamp: DateTime.parse(msgObj["timestamp"]) ?? DateTime.now(),
       metadataMessageId: msgObj["metadata"]["messageId"],
       //消息状态,消息状态，例如 sent, delivered, read
       metadataStatus: msgObj["metadata"]["status"],
@@ -225,6 +263,8 @@ class ClientMessageModel with Console {
 
     // 写入页面缓存队列中：主要用于，用户页面显示消息取用，省去查询数据库耗时
     String deviceId = msgObj["sender"]["id"]; // 来自发送方deviceId
+    printSuccess(
+        "inline client userQueue: ${GlobalManager.userMapMsgQueue.length}");
     GlobalManager.userMapMsgQueue[deviceId]!.enqueue(msgObj);
   }
 

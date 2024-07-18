@@ -123,7 +123,7 @@ class ChatWebsocketManager with Console {
       printSuccess("启动server成功!");
 
       //**************启动一个client本地websocket服务***********
-      rebootClientServer("127.0.0.1");
+      // rebootClientServer("127.0.0.1");
       //*****************************************************
     } else {
       // 启动client

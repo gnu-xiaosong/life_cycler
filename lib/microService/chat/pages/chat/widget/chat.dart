@@ -811,7 +811,7 @@ class _chatViewState extends State<chatView> {
     super.didChangeDependencies();
     // 获取路由传递过来的roomId
     deviceId = ModalRoute.of(context)!.settings.arguments.toString();
-    // 设置mesgQueue
+    // 设置msgQueue
     _messageQueue = GlobalManager.userMapMsgQueue[deviceId];
     // 设置监听
     _messageQueue?.stream?.listen((message) {

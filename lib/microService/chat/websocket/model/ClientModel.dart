@@ -31,7 +31,10 @@ class ClientModel extends ChatWebsocketClient {
     }
   }
 
-  test() {
+  /*
+  回复扫码添加好友状态
+   */
+  replayAddStatus() {
     Map? single = GlobalManager.clientWaitUserAgreeQueue.dequeue();
     singleAgreeUserHandler(single!);
   }
@@ -147,7 +150,12 @@ class ClientModel extends ChatWebsocketClient {
           GlobalManager.appCache.getString("chat_secret").toString(),
           msg["info"]);
       // 发送请求给服务端
-      send(json.encode(msg));
+      GlobalManager()
+          .GlobalChatWebsocket
+          .chatWebsocketClient
+          .send(json.encode(msg));
+      // 打印
+      printSuccess("response send to request is successful!");
     } catch (e, stacktrace) {
       printCatch("add user response, more detail : $e"); // 打印异常信息
       printCatch("Stacktrace: $stacktrace"); // 打印调用栈信息

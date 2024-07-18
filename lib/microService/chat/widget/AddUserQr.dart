@@ -17,6 +17,8 @@ class _AddUserQrState extends State<AddUserQr> {
   Future<String> getQrMessage() async {
     // 生成二维码信息
     Map qrInfo = await Tool().generateAddUserQrInfo();
+
+    print("qr info: ${qrInfo}");
     return json.encode(qrInfo);
   }
 
@@ -65,7 +67,7 @@ class _AddUserQrState extends State<AddUserQr> {
                                 data: qrData,
                                 size: 250,
                                 roundEdges: true,
-                                errorCorrectLevel: QrErrorCorrectLevel.M,
+                                errorCorrectLevel: QrErrorCorrectLevel.L,
                                 image: AssetImage('assets/images/logo.png'),
                               ),
                             )

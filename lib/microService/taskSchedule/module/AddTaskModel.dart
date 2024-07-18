@@ -23,7 +23,7 @@ class AddTaskModel extends Model with Console {
   /*
   addDatabase: 添加task数据库
    */
-  Future<void> insertDataToDatabase(Task task) async {
+  Future<void> insertDataToDatabase(TaskModel task) async {
     // 删掉相同的任务
     taskDao.deleteTask(task.taskId!);
 
@@ -94,9 +94,6 @@ class AddTaskModel extends Model with Console {
    */
   Future<Map<String, Object>> createTask(
       {required taskID, required taskName}) async {
-    // 存储目录名
-    String taskDirName = "tasks";
-
     // 1. 接收参数数据并统一封装
     List supportTypeForJson = [String, int, Null, List];
     Map taskDataMap = {
@@ -120,14 +117,14 @@ class AddTaskModel extends Model with Console {
     final taskFileInDir = (await super.getTaskFileInDir()).path;
     printInfo("外部存储目录: ${taskFileInDir.toString()}");
     // 创建包含新目录名的目录路径
-    final newDirectoryPath =
-        (await Directory(taskFileInDir).namePlus(taskDirName)).path;
-    // print(newDirectoryPath);
+    final newDirectoryPath = taskFileInDir + "/" + taskDirName;
+    // (await Directory(taskFileInDir).namePlus(taskDirName)).path;
+    print(newDirectoryPath);
     final newDirectory = Directory(newDirectoryPath.toString());
     // Directory('path').namePlusSync(taskDirName ); // 异步
     // 检查目录是否存在，如果不存在则创建
     if (!await newDirectory.exists()) {
-      await newDirectory.create(recursive: true);
+      await newDirectory.create(recursive: false);
       print('目录创建成功: $newDirectoryPath');
     }
 

@@ -14,11 +14,19 @@ import '../microService/taskSchedule/common/Task.dart';
 import '../microService/taskSchedule/common/Todo.dart';
 
 class TaskState extends AppState {
-  Task _tasks = Task();
-  Task get tasks => _tasks;
+  // 切换icon模式
+  bool _switchIconToggle = false;
+  bool get switchIconToggle => _switchIconToggle;
+
+  // 切换模式
+  bool _switchToggle = true;
+  bool get switchToggle => _switchToggle;
+
+  TaskModel _tasks = TaskModel();
+  TaskModel get tasks => _tasks;
 
   // 更改数据
-  void updateTask(Task task) {
+  void updateTask(TaskModel task) {
     _tasks = tasks;
     notifyListeners();
   }
@@ -32,6 +40,18 @@ class TaskState extends AppState {
   // update todo
   void updateTodo(List<Todo> todos) {
     _tasks.todos = todos;
+    notifyListeners();
+  }
+
+  // 模式开关切换
+  void switchToggleMode() {
+    _switchToggle = !_switchToggle;
+    notifyListeners();
+  }
+
+  // 模式开关切换
+  void switchIconToggleMode() {
+    _switchIconToggle = !_switchIconToggle;
     notifyListeners();
   }
 }

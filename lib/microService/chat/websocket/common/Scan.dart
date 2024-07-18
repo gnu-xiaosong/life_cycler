@@ -61,7 +61,7 @@ class Scan with Console {
         message["info"]);
 
     // 存储在消息队列中
-    GlobalManager.offerUserAddQueue.enqueue(message);
+    GlobalManager.clientWaitUserAgreeQueue.enqueue(message);
 
     //发送消息
     try {

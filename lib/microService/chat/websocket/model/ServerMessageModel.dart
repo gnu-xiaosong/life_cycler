@@ -179,10 +179,10 @@ class ServerMessageModel with Console {
     }
   }
 
-/*
-   请求server在线client用户
+  /*
+   广播server端在线client用户
    */
-  void requestInlineClient(HttpRequest request, WebSocket webSocket) {
+  void handleRequestInlineClients(HttpRequest request, WebSocket webSocket) {
     String deviceId = msgDataTypeMap?["info"]["deviceId"];
     // 1.客户端身份验证
     bool _auth = tool.clientAuth(deviceId, request, webSocket);
@@ -289,31 +289,34 @@ class ServerMessageModel with Console {
    广播在线client用户
    */
   void broadcastInlineClients() {
+    printSuccess("**************Broadcast Inline Clients*********************");
     // 获取在线的clientObject
     List deviceIdList = [];
 
     // 遍历clientObject
-    GlobalManager.webscoketClientObjectList.forEach((clientObject) {
+    for (var clientObject in GlobalManager.webscoketClientObjectList) {
       if (clientObject.connected && clientObject.status == 1) {
         deviceIdList.add(clientObject.deviceId.toString());
       }
-    });
+    }
 
     // 数据封装
     Map msg = {
       "type": "BROADCAST_INLINE_CLIENT",
       "info": {"type": "list", "deviceIds": deviceIdList}
     };
+
+    printInfo("inline Clients: ${msg}");
     // 广播发送
-    GlobalManager.webscoketClientObjectList.forEach((clientObject) {
+    for (var clientObject in GlobalManager.webscoketClientObjectList) {
       // 判断能够发送的client
       if (clientObject.connected && clientObject.status == 1) {
-        // 数据加密
-        msg["info"] =
-            messageEncrypte.encodeMessage(clientObject.secret, msg["info"]);
+        // 数据加密: 暂时不加密，因为有bug
+        // msg["info"] =
+        //     messageEncrypte.encodeMessage(clientObject.secret, msg["info"]);
         // 发送
         clientObject.socket.add(json.encode(msg));
       }
-    });
+    }
   }
 }

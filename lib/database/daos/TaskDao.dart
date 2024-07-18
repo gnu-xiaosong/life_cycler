@@ -12,6 +12,19 @@ class TaskDao extends BaseDao with Console {
   // 获取database单例
   LocalDatabase db = GlobalManager.database;
 
+// 根据taskId查询
+  Future<Task?> selectTaskByTaskName(String taskName) async {
+    // 构建查询
+    final query = db.select(db.tasks)
+      ..where((tbl) => tbl.name.equals(taskName));
+    // 获取查询结果
+    final result = await query.getSingleOrNull();
+    if (result == null) {
+      return null;
+    }
+    return result;
+  }
+
   // 根据taskId查询
   Future<Task?> selectTaskByTaskId(String taskId) async {
     // 构建查询

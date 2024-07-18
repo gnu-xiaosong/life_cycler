@@ -3,7 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import 'Todo.dart';
 
-class Task {
+class TaskModel {
   String? taskId = "task_" + Uuid().v4().toString();
   String? userId;
   String? name;
@@ -12,8 +12,8 @@ class Task {
   String? description;
   String priority = 'Low';
   String status = 'pending';
-  DateTime? startTime;
-  DateTime? endTime;
+  DateTime? startTime; // DateTime格式
+  DateTime? endTime; // DateTime格式
   List<Todo>? todos = [];
 
   @override

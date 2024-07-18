@@ -1,35 +1,11 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:app_template/database/LocalStorage.dart';
 import 'package:app_template/microService/chat/pages/chat/widget/chat.dart';
-import 'package:app_template/microService/chat/pages/chat/widget/chatBubbleBuilder.dart';
-import 'package:buttons_tabbar/buttons_tabbar.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' as Flutter;
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
-
 import 'package:smooth_sheets/smooth_sheets.dart';
-import 'package:social_media_recorder/audio_encoder_type.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:flutter/foundation.dart' as foundation;
-import 'package:social_media_recorder/screen/social_media_recorder.dart';
-
 import '../../../../config/AppConfig.dart';
 import '../../../../widgets/dropdowns/DropdownButton1.dart';
-import '../../model/ChatPageModel.dart';
-import '../../websocket/common/unique_device_id.dart';
 
 class ChatPage extends StatefulWidget {
   ChatPage({super.key}) {}
