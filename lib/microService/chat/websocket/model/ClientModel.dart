@@ -63,6 +63,7 @@ class ClientModel extends ChatWebsocketClient {
 
     this.decode_msg = msg;
 
+    printSuccess("扫码数据: ${this.decode_msg}");
     return QuickAlert.show(
       context: GlobalManager.context,
       type: QuickAlertType.confirm,
@@ -133,7 +134,7 @@ class ClientModel extends ChatWebsocketClient {
     try {
       // 写入数据库中
       userChat.addUserChat(
-          msg["info"]["sender"]["deviceId"].toString(),
+          msg["info"]["sender"]["id"].toString(),
           msg["info"]["sender"]["avatar"].toString(),
           msg["info"]["sender"]["username"].toString());
 
@@ -149,6 +150,7 @@ class ClientModel extends ChatWebsocketClient {
       msg["info"] = MessageEncrypte().encodeMessage(
           GlobalManager.appCache.getString("chat_secret").toString(),
           msg["info"]);
+
       // 发送请求给服务端
       GlobalManager()
           .GlobalChatWebsocket

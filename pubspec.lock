@@ -1533,6 +1533,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.1"
+  motion_toast:
+    dependency: "direct main"
+    description:
+      name: motion_toast
+      sha256: "8dc8af93c606d0a08f2592591164f4a761099c5470e589f25689de6c601f124e"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.10.0"
   mutex:
     dependency: transitive
     description:

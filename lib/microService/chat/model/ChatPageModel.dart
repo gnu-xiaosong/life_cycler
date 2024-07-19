@@ -19,11 +19,12 @@ class ChatPageModel extends ChatWebsocketClient {
    封装chat页面的message数据: 明文
    */
   messageInChat(Map message) {
+    printSuccess("new message: ${message}");
     // 消息类型
-    String msgType = message["info"]["msgType"];
+    String msgType = message["msgType"];
     // 发送者
     final _user = types.User(
-      id: message["info"]["sender"]["id"].toString(), // 唯一用户 ID
+      id: message["sender"]["id"].toString(), // 唯一用户 ID
     );
     late final _message;
     // 判断消息的类型:根据不同的消息类型对消息进行封装
@@ -33,14 +34,17 @@ class ChatPageModel extends ChatWebsocketClient {
           // 发送者
           author: _user,
           //消息id
-          id: message["info"]["metadata"]["messageId"].toString(),
+          id: message["metadata"]["messageId"].toString(),
           // 文本
-          text: message["info"]["content"]["text"].toString(),
-          // 发送时间
-          createdAt: int.parse(message["info"]["timestamp"]) ??
-              DateTime.now().millisecondsSinceEpoch,
+          text: message["content"]["text"].toString(),
+          // 显示状态
+          showStatus: true,
+          // 发送时间: 秒数
+          createdAt:
+              DateTime.parse(message["timestamp"]).millisecondsSinceEpoch ??
+                  DateTime.now().millisecondsSinceEpoch,
           // 数据元: Map<String, dynamic>
-          metadata: message["info"]["metadata"]);
+          metadata: message["metadata"]);
     } else if (msgType == "file") {
       // 文件消息类型
     } else {

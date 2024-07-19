@@ -31,8 +31,7 @@ class ServerMessageHandlerByType with Console {
           messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
 
       // 客户端请求局域网内服务端server的请求
-      serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.scan(request, webSocket);
+      serverMessageModel.scan(request, webSocket, msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "AUTH") {
       //************************测试************************************
       // msgDataTypeMap["info"] =
@@ -45,8 +44,7 @@ class ServerMessageHandlerByType with Console {
       printInfo("解密结果:$msgDataTypeMap");
 
       // 客户端client 第一次请求认证服务端server
-      serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.auth(request, webSocket);
+      serverMessageModel.auth(request, webSocket, msgDataTypeMap);
       // 广播在线client用户数
       serverMessageModel.broadcastInlineClients();
     } else if (msgDataTypeMap["type"] == "MESSAGE") {
@@ -57,8 +55,7 @@ class ServerMessageHandlerByType with Console {
       msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
           clientObject.secret, msgDataTypeMap["info"]);
       // 为消息类型
-      serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.message(request, webSocket);
+      serverMessageModel.message(request, webSocket, msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "REQUEST_INLINE_CLIENT") {
       // 获取websoket对应的ClientObject对象
       ClientObject clientObject = tool.getClientObject(request, webSocket);
@@ -67,8 +64,8 @@ class ServerMessageHandlerByType with Console {
       msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
           clientObject.secret, msgDataTypeMap["info"]);
       // 请求在线用户
-      serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.handleRequestInlineClients(request, webSocket);
+      serverMessageModel.handleRequestInlineClients(
+          request, webSocket, msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "REQUEST_SCAN_ADD_USER") {
       printInfo("-------------REQUEST_SCAN_ADD_USER-----------------");
 
@@ -80,9 +77,11 @@ class ServerMessageHandlerByType with Console {
       msgDataTypeMap["info"] = messageEncrypte.decodeMessage(
           clientObject.secret, msgDataTypeMap["info"]);
 
-      // 请求在线用户
-      serverMessageModel.msgDataTypeMap = msgDataTypeMap;
-      serverMessageModel.responseScanAddUser(request, webSocket);
+      // 响应
+      serverMessageModel.responseScanAddUser(
+          request, webSocket, msgDataTypeMap);
+      // 广播在线client用户数
+      serverMessageModel.broadcastInlineClients();
     } else {
       // 未标识消息类型
       printWarn("未识别消息类型: ${msgDataTypeMap.toString()}");

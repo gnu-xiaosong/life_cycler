@@ -1,3 +1,4 @@
+import 'package:app_template/manager/GlobalManager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
@@ -10,6 +11,10 @@ Widget chatBubbleBuilder(
 }) {
   print("message:");
   print(message);
+
+  // 消息位置
+  List msgPosition = messagePosition(message);
+
   // 从消息对象中提取文本
   String messageText = '';
   if (message is types.TextMessage) {
@@ -21,9 +26,11 @@ Widget chatBubbleBuilder(
   } else if (message.type == types.MessageType.text) {
     // 文本bubble
     return ChatBubble(
-      clipper: ChatBubbleClipper3(type: BubbleType.sendBubble),
-      alignment: Alignment.topRight,
-      margin: EdgeInsets.only(top: 20),
+      // sender or receive
+      clipper: ChatBubbleClipper3(type: msgPosition[0]),
+      // 根据deviceId判断位置
+      alignment: msgPosition[1],
+      margin: const EdgeInsets.only(top: 20),
       backGroundColor: Colors.blue,
       child: Container(
         // constraints: BoxConstraints(
@@ -50,4 +57,28 @@ Widget chatBubbleBuilder(
   }
 
   return Text("遇到程序性错误!");
+}
+
+/*
+ 确定message消息的显示位置
+ */
+List messagePosition(types.Message message) {
+  // 根据与本地deviceId对比确定是否为本机发送消息
+  // 获取本地deviceId
+
+  String deviceId = GlobalManager.deviceId.toString();
+  print("****************************************************************");
+  print("message test: deviceId=${deviceId}");
+  print(message);
+  // 获取消息的deviceId
+  String msgDeviceId = message.author.id;
+  print("message test: msgDeviceId=${msgDeviceId}");
+
+  if (deviceId == msgDeviceId) {
+    // 本机
+    return [BubbleType.sendBubble, Alignment.topRight];
+  } else {
+    // 对方
+    return [BubbleType.receiverBubble, Alignment.topLeft];
+  }
 }

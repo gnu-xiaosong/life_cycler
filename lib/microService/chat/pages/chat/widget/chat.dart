@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:app_template/database/daos/ChatDao.dart';
 import 'package:app_template/manager/GlobalManager.dart';
@@ -28,6 +27,7 @@ import '../../../websocket/common/unique_device_id.dart';
 import '../../../websocket/schedule/MessageQueue.dart';
 import 'chatBubbleBuilder.dart';
 import 'package:http/http.dart' as http;
+import 'package:motion_toast/motion_toast.dart';
 
 class chatView extends StatefulWidget {
   const chatView({super.key});
@@ -39,7 +39,7 @@ class chatView extends StatefulWidget {
 class _chatViewState extends State<chatView> {
   // 获取该roomId对应的消息队列
   late final MessageQueue? _messageQueue;
-
+  String? myDeviceId;
   // 存储消息的列表
   List<types.Message> _messages = [];
   ChatPageModel chatPageModel = ChatPageModel();
@@ -66,6 +66,8 @@ class _chatViewState extends State<chatView> {
     return Stack(
       children: [
         Flutter.Chat(
+          scrollPhysics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           messages: _messages, // 消息列表
           onAttachmentPressed: _handleAttachmentPressed, // 附件按钮点击事件
           onMessageTap: _handleMessageTap, // 消息点击事件
@@ -366,13 +368,19 @@ class _chatViewState extends State<chatView> {
         metadataStatus: message.status.toString(),
         isGroup: 0);
     chatDao.insertChat(chatsCompanion);
-    // 发送消息到server端
-    String myDeviceId = await UniqueDeviceId.getDeviceUuid();
+
+    print("recipientId:${deviceId}");
+    // 设置消息元
+    Map metadata = {
+      "messageId": message.id, // 消息的唯一标识符
+      "status": "sent" // 消息状态，例如 sent, delivered, read
+    };
 
     bool result = GlobalManager.chatWebsocketClient!.sendMessage(
         senderId: myDeviceId,
         recipientId: deviceId!,
-        contentText: message.toJson()["text"]);
+        contentText: message.toJson()["text"],
+        metadata: metadata);
 
     if (result) {
       // 更新数据
@@ -810,9 +818,51 @@ class _chatViewState extends State<chatView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // 获取路由传递过来的roomId
-    deviceId = ModalRoute.of(context)!.settings.arguments.toString();
+    try {
+      // 正常获取
+      deviceId = ModalRoute.of(context)!.settings.arguments.toString();
+      // 存储在缓存中
+      GlobalManager.appCache.setString("receiveDeviceId", deviceId!);
+
+      // 多层判断
+      if (GlobalManager.appCache.containsKey("receiveDeviceId")) {
+        deviceId ??= GlobalManager.appCache.getString("receiveDeviceId");
+      } else {
+        // 提示
+        MotionToast.error(
+                title: Text("Warning".tr()),
+                description: Text(
+                    "appCache not did containsKey is receiveDeviceId".tr()))
+            .show(context);
+      }
+    } catch (e) {
+      // 页面刷新获取
+      if (GlobalManager.appCache.containsKey("receiveDeviceId")) {
+        // 存在
+        deviceId = GlobalManager.appCache.getString("receiveDeviceId");
+      } else {
+        // 提示
+        MotionToast.error(
+                title: Text("Warning".tr()),
+                description: Text(
+                    "appCache not did containsKey is receiveDeviceId".tr()))
+            .show(context);
+      }
+    }
+
+    // 判断
+    if (deviceId == null) {
+      // 提示
+      MotionToast.error(
+              title: Text("System error".tr()),
+              description: Text("deviceId is empty!".tr()))
+          .show(context);
+    }
+
     // 设置msgQueue
     _messageQueue = GlobalManager.userMapMsgQueue[deviceId];
+    // 打印deviceID
+    print("chat page: myDeviceId=${myDeviceId}  receiveDeviceID=${deviceId}");
     // 设置监听
     _messageQueue?.stream?.listen((message) {
       print("监听到消息队列变化,新增消息message: $message");
@@ -824,16 +874,21 @@ class _chatViewState extends State<chatView> {
       setState(() {
         _messages.insert(0, addMessage); // 将新消息插入到列表的开头
       });
+
+      // 打印deviceID
+      print("chat page: myDeviceId=${myDeviceId}  receiveDeviceID=${deviceId}");
     });
   }
 
   getDeviceId() async {
-    deviceId = await UniqueDeviceId.getDeviceUuid();
-    if (deviceId != null) {
+    myDeviceId = await UniqueDeviceId.getDeviceUuid();
+    if (myDeviceId != null) {
       // 不为空
       _user = types.User(
-        id: deviceId.toString(), // 唯一用户 ID
+        id: myDeviceId.toString(), // 唯一用户 ID
       );
+      // 打印deviceID
+      print("chat page: myDeviceId=${myDeviceId}  receiveDeviceID=${deviceId}");
     } else {
       // 为空
       _user = const types.User(

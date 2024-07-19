@@ -67,7 +67,7 @@ class _AddUserQrState extends State<AddUserQr> {
                                 data: qrData,
                                 size: 250,
                                 roundEdges: true,
-                                errorCorrectLevel: QrErrorCorrectLevel.L,
+                                errorCorrectLevel: QrErrorCorrectLevel.M,
                                 image: AssetImage('assets/images/logo.png'),
                               ),
                             )

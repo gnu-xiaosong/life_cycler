@@ -104,7 +104,7 @@ class ChatWebsocketClient extends WebsocketClient with Console {
    */
   bool sendMessage(
       {required String recipientId,
-      String? groupOruser,
+      String? groupOrUser,
       required String contentText,
       String? timestamp,
       String? username,
@@ -112,8 +112,7 @@ class ChatWebsocketClient extends WebsocketClient with Console {
       String? avatar,
       String? msgType,
       Map metadata = const {
-        "messageId": "msg123",
-        // 消息的唯一标识符
+        "messageId": "msg123", // 消息的唯一标识符
         "status": "sent" // 消息状态，例如 sent, delivered, read
       },
       List<Map> attachments = const [
@@ -138,12 +137,11 @@ class ChatWebsocketClient extends WebsocketClient with Console {
         },
         "recipient": {
           "id": recipientId, // 私聊设备唯一标识,群聊为群号
-          "type": groupOruser ?? "user" //接收者类型，例如 group 表示群组消息，user 表示私聊消息
+          "type": groupOrUser ?? "user" //接收者类型，例如 group 表示群组消息，user 表示私聊消息
         },
         "content": {
-          "text": contentText,
-          // 文本消息内容
-          "attachments": attachments
+          "text": contentText, // 文本消息内容
+          "attachments": attachments // 附件：list
         },
         // 消息发送时间戳
         "timestamp": timestamp ?? DateTime.now().toString(),
@@ -152,6 +150,7 @@ class ChatWebsocketClient extends WebsocketClient with Console {
       }
     };
 
+    printError("发送消息: ${msg}");
     String secret = GlobalManager.appCache.getString("chat_secret") ?? "";
     if (secret.isEmpty) {
       print("-warning: 通讯秘钥 'chat_secret' 为空！消息加密失败。");

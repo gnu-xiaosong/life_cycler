@@ -15,14 +15,13 @@ import '../schedule/OffLineHandler.dart';
 import '../schedule/WaitAgreeUserAddClientHandler.dart';
 
 class ServerMessageModel with Console {
-  Map? msgDataTypeMap;
   Tool tool = Tool();
   MessageEncrypte messageEncrypte = MessageEncrypte();
 
   /*
     客户端请求局域网内服务端server的请求
    */
-  void scan(HttpRequest request, WebSocket webSocket) {
+  void scan(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 获取客户端 IP 和端口
     var clientIp = request.connectionInfo?.remoteAddress.address;
     var clientPort = request.connectionInfo?.remotePort;
@@ -46,7 +45,7 @@ class ServerMessageModel with Console {
   /*
     客户端client 第一次请求认证服务端server
    */
-  void auth(HttpRequest request, WebSocket webSocket) {
+  void auth(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 获取客户端 IP 和端口
     var clientIp = request.connectionInfo?.remoteAddress.address;
     var clientPort = request.connectionInfo?.remotePort;
@@ -73,6 +72,11 @@ class ServerMessageModel with Console {
         port: clientPort!.toInt(),
       );
 
+      // 先剔除全局list中相同deviceID的client对象
+      GlobalManager.webscoketClientObjectList = GlobalManager
+          .webscoketClientObjectList
+          .where((clientItem) => clientItem.deviceId != client.deviceId)
+          .toList();
       // 添加进list中
       GlobalManager.webscoketClientObjectList.add(client);
 
@@ -117,7 +121,7 @@ class ServerMessageModel with Console {
   /*
     消息类型
    */
-  void message(HttpRequest request, WebSocket webSocket) {
+  void message(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 1.客户端身份验证: deviceId为发送者的设备id
     bool secret_auth = tool.clientAuth(
         msgDataTypeMap?["info"]["sender"]["id"], request, webSocket);
@@ -182,7 +186,8 @@ class ServerMessageModel with Console {
   /*
    广播server端在线client用户
    */
-  void handleRequestInlineClients(HttpRequest request, WebSocket webSocket) {
+  void handleRequestInlineClients(
+      HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     String deviceId = msgDataTypeMap?["info"]["deviceId"];
     // 1.客户端身份验证
     bool _auth = tool.clientAuth(deviceId, request, webSocket);
@@ -233,7 +238,7 @@ class ServerMessageModel with Console {
    用于扫码添加好友
    */
   Future<void> responseScanAddUser(
-      HttpRequest request, WebSocket webSocket) async {
+      HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) async {
     // 接收方deviceId
     String recive_deviceId = msgDataTypeMap?["info"]["recipient"]["id"] ?? "";
     // 发送者
@@ -269,10 +274,11 @@ class ServerMessageModel with Console {
       printSuccess("msg alreaded to the AgreeUserAddQueue!");
     } else {
       //***************************待测试需要找第三个设备******************
+      print("对方在线");
       // 在线直接发起add user请求
       /// 2.加密数据
       send_data?["info"] = MessageEncrypte()
-          .encodeMessage(receive_clientObject!.secret, send_data?["info"]);
+          .encodeMessage(receive_clientObject.secret, send_data["info"]);
 
       /// 3.发送
       try {

@@ -6,6 +6,7 @@
  * @Description: 全局管理器工具类
  */
 import 'dart:convert';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart' as types;
@@ -54,6 +55,8 @@ class GlobalManager {
   // 10. task全局变量
   static TaskModel task = TaskModel();
   static int taskTodoSecond = 0;
+  // 11.全局deviceId
+  static String? deviceId;
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 
   /****************↓↓↓↓↓↓工具类初始化操作↓↓↓↓↓↓↓**********************/
@@ -103,6 +106,9 @@ class GlobalManager {
       appFirstRun();
       prefs.setBool('isFirstRun', false);
     }
+
+    // 设置全局deviceId
+    deviceId = await UniqueDeviceId.getDeviceUuid();
 
     // -------------------管理类初始化--------------------
     //1.本地通知初始化(单例模式)

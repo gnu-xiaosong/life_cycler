@@ -21,18 +21,15 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
-      // 处理该类型的返回
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.scan(channel);
+
+      clientMessageModel.scan(channel, msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "AUTH") {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeAuth(msgDataTypeMap["info"]);
       printInfo("解密结果:$msgDataTypeMap");
 
-      // 客户端client 第一次请求认证服务端server
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.auth(channel);
+      clientMessageModel.auth(channel, msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "MESSAGE") {
       // 从缓存中取出secret 通讯秘钥
       String? secret = GlobalManager.appCache.getString("chat_secret");
@@ -41,19 +38,17 @@ class ClientMessageHandlerByType extends Tool with Console {
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
       // 接收消息
       printSuccess("receive msg: ${msgDataTypeMap}");
-      // 为消息类型
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.message();
+
+      clientMessageModel.message(msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "REQUEST_INLINE_CLIENT") {
       // 从缓存中取出secret 通讯秘钥
       String? secret = GlobalManager.appCache.getString("chat_secret");
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
-      // 处理在线client
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
+
       // 请求在线client的Map的msgQueue队列
-      clientMessageModel.requestInlineClient();
+      clientMessageModel.requestInlineClient(msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "REQUEST_SCAN_ADD_USER") {
       // 通过扫码请求添加好友请求
       // 从缓存中取出secret 通讯秘钥
@@ -61,10 +56,8 @@ class ClientMessageHandlerByType extends Tool with Console {
       // 解密info字段
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
-      // printInfo(msgDataTypeMap);
-      // 处理在线client
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.scanQrAddUser();
+      // 调用
+      clientMessageModel.scanQrAddUser(msgDataTypeMap);
     } else if (msgDataTypeMap["type"] == "BROADCAST_INLINE_CLIENT") {
       // 接收server广播得到的在线client用户
       // 从缓存中取出secret 通讯秘钥
@@ -75,8 +68,7 @@ class ClientMessageHandlerByType extends Tool with Console {
       //
       // print("解密: $msgDataTypeMap");
       // 处理server广播得到的在线client
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.receiveInlineClients();
+      clientMessageModel.receiveInlineClients(msgDataTypeMap);
     } else {
       printWarn("未标识消息类型");
       // 从缓存中取出secret 通讯秘钥
@@ -85,8 +77,7 @@ class ClientMessageHandlerByType extends Tool with Console {
       msgDataTypeMap["info"] =
           messageEncrypte.decodeMessage(secret!, msgDataTypeMap["info"]);
 
-      clientMessageModel.msgDataTypeMap = msgDataTypeMap;
-      clientMessageModel.other();
+      clientMessageModel.other(msgDataTypeMap);
     }
   }
 }

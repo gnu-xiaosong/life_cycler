@@ -164,7 +164,7 @@ class _ChatListState extends State<ChatList> {
                   arguments: item.deviceId.toString());
             },
             leading: randomAvatar('saytoonz', height: 50, width: 50),
-            subtitle: Text(item.createdAt),
+            subtitle: Text(item.deviceId),
             trailing: Text(item.id.toString()),
             title: Text(item.username),
           ),

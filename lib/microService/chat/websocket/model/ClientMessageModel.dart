@@ -21,13 +21,10 @@ import '../common/UserChat.dart';
 class ClientMessageModel with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
   UserChat userChat = UserChat();
-  // 消息类型
-  late Map msgDataTypeMap;
-
   /*
   处理server端广播得到的在线client用户
    */
-  Future<void> receiveInlineClients() async {
+  Future<void> receiveInlineClients(Map msgDataTypeMap) async {
     printSuccess(
         "******************处理从server接收到的在线client***********************");
 
@@ -67,7 +64,7 @@ class ClientMessageModel with Console {
   /*
   扫描Qr添加用户: widget用户UI
    */
-  Future<void> scanQrAddUser() async {
+  Future<void> scanQrAddUser(Map msgDataTypeMap) async {
     // msgDataTypeMap为明文，未加密
     UserChat userChat = UserChat();
     ClientModel clientModel = ClientModel();
@@ -112,11 +109,12 @@ class ClientMessageModel with Console {
             try {
               printInfo(
                   "-----%%%%--------------handling the response for add user by scan -------------%%%%%%%-------------");
-              // 添加进数据库
+              print(messageQueue);
+              // 添加进数据库  messageQueue
               userChat.addUserChat(
-                  msgDataTypeMap?["info"]["recipient"]["id"],
-                  msgDataTypeMap?["info"]["recipient"]["avatar"],
-                  msgDataTypeMap?["info"]["recipient"]["username"]);
+                  messageQueue["info"]["recipient"]["id"],
+                  messageQueue["info"]["recipient"]["avatar"],
+                  messageQueue["info"]["recipient"]["username"]);
               printSuccess("user add to database is successful!");
             } catch (e) {
               printCatch(
@@ -124,6 +122,12 @@ class ClientMessageModel with Console {
               // 重新添加进队列中
               GlobalManager.clientWaitUserAgreeQueue.enqueue(tmp_messageQueue!);
             }
+          } else {
+            // 队列中msg为空或握手秘钥有误
+            printWarn(
+                "this clientWaitUserAgreeQueue is empty or both confirm_key is error!");
+            printWarn(
+                "warning detail: messageQueue=${messageQueue} msgDataTypeMap=${msgDataTypeMap}");
           }
         }
       } else if (status == "disagree") {
@@ -162,7 +166,7 @@ class ClientMessageModel with Console {
   /*
    处理server在线client用户:调用即可
    */
-  void requestInlineClient() {
+  void requestInlineClient(Map msgDataTypeMap) {
     printSuccess(
         "*****************requestInlineClient***************************");
     // 1.获取deviceId 列表
@@ -180,7 +184,7 @@ class ClientMessageModel with Console {
   /*
     客户端请求局域网内服务端server的请求
    */
-  void scan(WebSocketChannel? channel) {
+  void scan(WebSocketChannel? channel, Map msgDataTypeMap) {
     // 打印消息
     printInfo("--------------SCAN TASK HANDLER--------------------");
     printTable(msgDataTypeMap);
@@ -206,7 +210,7 @@ class ClientMessageModel with Console {
   /*
     客户端client 第一次请求认证服务端server
    */
-  void auth(WebSocketChannel? channel) {
+  void auth(WebSocketChannel? channel, Map msgDataTypeMap) {
     // 打印消息
     printInfo("--------------AUTH TASK HANDLER--------------------");
     printInfo(">> receive: $msgDataTypeMap");
@@ -234,7 +238,7 @@ class ClientMessageModel with Console {
   /*
     消息类型:已解密
    */
-  void message() {
+  void message(Map msgDataTypeMap) {
     printInfo("--------------MESSAGE TASK HANDLER--------------------");
     // 1.实例化ChatDao事务操作类
     ChatDao chatDao = ChatDao();
@@ -271,7 +275,8 @@ class ClientMessageModel with Console {
   /*
  其他未标识消息类型
   */
-  void other() {
+  void other(Map msgDataTypeMap) {
     // 其他消息类型：明文传输
+    printInfo("receive other  msg:${msgDataTypeMap}");
   }
 }

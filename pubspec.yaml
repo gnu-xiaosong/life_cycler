@@ -136,6 +136,7 @@ dependencies:
   cupertino_timer: ^1.0.2
   circular_countdown_timer: ^0.2.3
   countdown_progress_indicator: ^0.1.2
+  motion_toast: ^2.10.0
 
 
 
