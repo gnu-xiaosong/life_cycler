@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../model/AudioModel.dart';
 import '../websocket/common/Scan.dart';
 
 class ScanPage extends StatefulWidget {
@@ -19,6 +20,10 @@ class _ScanPageState extends State<ScanPage>
   late Animation<double> _lineAnimation;
   bool _isTorchOn = false;
   bool _isScanning = true;
+  // 音效类
+  AudioModel audioModel = AudioModel();
+  // 扫码类
+  Scan scan = Scan();
 
   var isLoading = false;
 
@@ -90,12 +95,14 @@ class _ScanPageState extends State<ScanPage>
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 Map qr_data = json.decode(barcode.rawValue.toString());
-                print('二维码找到！${qr_data}');
+                print('二维码找到！: ${qr_data}');
+                // 播放音效
+                audioModel.playAudioEffect(Audios.scan);
                 // 模态框提示
                 EasyLoading.showSuccess(
                   '${"successful".tr()}',
                 );
-                Scan().scanHandlerByType(context, _controller, qr_data);
+                scan.scanHandlerByType(context, _controller, qr_data);
               }
             },
           ),

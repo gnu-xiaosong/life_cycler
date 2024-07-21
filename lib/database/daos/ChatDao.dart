@@ -17,14 +17,13 @@ class ChatDao implements BaseDao<Chat> {
       ChatsCompanion chatsCompanion) async {
     // 构建查询: 获取双方的聊天信息
     final query = db.select(db.chats)
-      ..where((tbl) =>
-          (tbl.senderId.equals(chatsCompanion.senderId.value!) &
-              tbl.recipientId.equals(chatsCompanion.recipientId.value!)) |
-          (tbl.senderId.equals(chatsCompanion.recipientId.value!) &
-              tbl.recipientId.equals(chatsCompanion.senderId.value!)));
+      ..where((tbl) => (tbl.senderId.equals(chatsCompanion.recipientId.value!) |
+          tbl.recipientId.equals(chatsCompanion.recipientId.value!)));
     // 获取查询结果
     final result = await query.get();
-
+    final all = await db.select(db.chats).get();
+    print(
+        "数据库聊天数据:recipientId = ${chatsCompanion.recipientId.value}  ${result.length}  all=${all.length}");
     // 将查询结果转换为 UserData 的列表
     return result.toList();
   }
@@ -33,7 +32,7 @@ class ChatDao implements BaseDao<Chat> {
   Future<dynamic> insertChat(ChatsCompanion chatsCompanion) async {
     // 构建
     final result = await db.into(db.chats).insert(chatsCompanion);
-
+    print("插入结果: ${result}");
     return result;
   }
 

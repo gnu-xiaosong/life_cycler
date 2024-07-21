@@ -9,7 +9,6 @@ import 'dart:convert';
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' as types;
 import 'package:shared_preferences/shared_preferences.dart';
 
 //应用配置信息

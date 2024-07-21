@@ -224,6 +224,7 @@ server端返回
 			"id": "user123",// 设备唯一标识
 			// 发送者的唯一标识符
 			"username": "Alice",
+            "role":  "角色", // admin(管理员), agent(坐席), moderator(版主), user(用户)
 			// 发送者用户名
 			"avatar": "avatar.jpg" // 发送者头像（可选）
 		},

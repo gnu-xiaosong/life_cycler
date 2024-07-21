@@ -14,7 +14,7 @@ class NotificationsManager {
   /*
   * 文档：https://pub-web.flutter-io.cn/packages/flutter_local_notifications#general-setup
   * 提示：要求开启应用的通知权限
-  * 在ANdroid的AndroidManifest.xml中添加:
+  * 在Android的AndroidManifest.xml中添加:
   *
   <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
   <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

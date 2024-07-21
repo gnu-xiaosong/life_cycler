@@ -4,6 +4,7 @@ client不同消息类型处理模块
 
 import 'dart:convert';
 
+import 'package:app_template/microService/chat/model/CommonModel.dart';
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import 'package:drift/drift.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -13,14 +14,19 @@ import '../../../../database/LocalStorage.dart';
 import '../../../../database/daos/ChatDao.dart';
 import '../../../../database/daos/UserDao.dart';
 import '../../../../manager/GlobalManager.dart';
+import '../../../../manager/NotificationsManager.dart';
+import '../../model/AudioModel.dart';
 import 'ClientModel.dart';
 import '../common/Console.dart';
 import '../common/MessageEncrypte.dart';
 import '../common/UserChat.dart';
 
-class ClientMessageModel with Console {
+class ClientMessageModel extends CommonModel with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
   UserChat userChat = UserChat();
+
+  // 音效类
+  AudioModel audioModel = AudioModel();
   /*
   处理server端广播得到的在线client用户
    */
@@ -240,36 +246,26 @@ class ClientMessageModel with Console {
    */
   void message(Map msgDataTypeMap) {
     printInfo("--------------MESSAGE TASK HANDLER--------------------");
-    // 1.实例化ChatDao事务操作类
-    ChatDao chatDao = ChatDao();
-
     // 写入数据库
     Map msgObj = msgDataTypeMap["info"];
 
-    // 封装实体
-    ChatsCompanion chatsCompanion = ChatsCompanion.insert(
-      senderId: Value(msgObj["sender"]["id"]),
-      senderUsername: msgObj["sender"]["username"],
-      msgType: msgObj["msgType"],
-      contentText: msgObj["content"]["text"],
-      timestamp: DateTime.parse(msgObj["timestamp"]) ?? DateTime.now(),
-      metadataMessageId: msgObj["metadata"]["messageId"],
-      //消息状态,消息状态，例如 sent, delivered, read
-      metadataStatus: msgObj["metadata"]["status"],
-      isGroup: msgObj["recipient"]["type"] == "user" ? 0 : 1,
-      senderAvatar: Value(msgObj["sender"]["avatar"]), // 发送者头像
-      recipientId:
-          Value(msgObj["recipient"]["id"]), //接收者ID（对应user表的唯一id），群聊时为群号',
-      contentAttachments:
-          Value(json.encode(msgObj["content"]["attachments"])), //附件列表',
-    );
-    chatDao.insertChat(chatsCompanion);
+    // 插入数据库中
+    insertMessageToDataStorage(msgObj);
 
     // 写入页面缓存队列中：主要用于，用户页面显示消息取用，省去查询数据库耗时
     String deviceId = msgObj["sender"]["id"]; // 来自发送方deviceId
     printSuccess(
         "inline client userQueue: ${GlobalManager.userMapMsgQueue.length}");
     GlobalManager.userMapMsgQueue[deviceId]!.enqueue(msgObj);
+
+    //****************************自定义业务逻辑*******************************************
+    // 提示音效
+    AudioModel audioModel = AudioModel();
+    audioModel.playAudioEffect(Audios.message);
+    // 状态栏通知
+    NotificationsManager notification = NotificationsManager();
+    notification.showNotification(
+        title: msgObj["sender"]["username"], body: msgObj["content"]["text"]);
   }
 
   /*

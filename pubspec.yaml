@@ -137,6 +137,9 @@ dependencies:
   circular_countdown_timer: ^0.2.3
   countdown_progress_indicator: ^0.1.2
   motion_toast: ^2.10.0
+  just_audio: ^0.9.39
+  just_audio_mpv: ^0.1.7
+  just_audio_windows: ^0.2.1
 
 
 
@@ -176,6 +179,7 @@ flutter:
     - assets/introduction_animation/
     - assets/images/
     - assets/icons/
+    - assets/audios/
 
 
   # fonts:
