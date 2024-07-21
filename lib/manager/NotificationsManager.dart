@@ -10,7 +10,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'PermissionManager.dart';
+
 class NotificationsManager {
+  PermissionManager permissionManager = PermissionManager();
   /*
   * 文档：https://pub-web.flutter-io.cn/packages/flutter_local_notifications#general-setup
   * 提示：要求开启应用的通知权限
@@ -49,6 +52,8 @@ class NotificationsManager {
 
   // 初始化函数
   Future<void> initialize() async {
+    // 请求权限
+    permissionManager.requestNotificationPermission();
     //  初始化tz
     tz.initializeTimeZones();
     // AndroidInitializationSettings是一个用于设置Android上的本地通知初始化的类

@@ -24,8 +24,6 @@ import '../websocket/common/CommunicationMessageObject.dart';
 import '../websocket/common/MessageEncrypte.dart';
 import 'package:mime/mime.dart';
 import 'package:http/http.dart' as http;
-
-import '../websocket/common/unique_device_id.dart';
 import 'CommonModel.dart';
 
 class ChatPageModel extends ChatWebsocketClient {

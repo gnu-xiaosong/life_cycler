@@ -1,5 +1,3 @@
-import 'package:app_template/microService/chat/model/CommonModel.dart';
-import 'package:app_template/microService/chat/websocket/common/CommunicationMessageObject.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +9,7 @@ import 'package:social_media_recorder/screen/social_media_recorder.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter/foundation.dart' as foundation;
 import '../model/ChatPageModel.dart';
+import 'ChatBottomTool.dart';
 
 class ChatBottom extends StatefulWidget {
   late ChatPageModel chatPageModel;
@@ -29,7 +28,7 @@ class _ChatBottomState extends State<ChatBottom> {
   late AnimationController animControl;
   bool animate = false;
   // 底部可变高度
-  double _changeHeight = 0.0;
+  double _changeHeight = 200.h;
   bool _isText = false;
   final FocusNode _focusNode = FocusNode();
   final _emoController = TextEditingController();
@@ -148,8 +147,8 @@ class _ChatBottomState extends State<ChatBottom> {
                 FocusScope.of(context).unfocus();
                 _emojiShowing = false;
 
+                // _changeHeight = (_changeHeight == 0.0 ? 300.0 : 0.0); // 切换高度
                 animate = !animate;
-                _changeHeight = (_changeHeight == 0.0 ? 300.0 : 0.0); // 切换高度
                 print("_changeHeight: $_changeHeight");
               });
             },
@@ -183,7 +182,8 @@ class _ChatBottomState extends State<ChatBottom> {
                 // 关闭键盘
                 print("----------------------open emo-----------------");
                 FocusScope.of(context).unfocus();
-                animate = !animate;
+                animate = false;
+                // _changeHeight = (_changeHeight == 0.0 ? 300.0 : 0.0); // 切换高度
                 _emojiShowing = !_emojiShowing;
                 print("open emo: $_emojiShowing");
               });
@@ -252,12 +252,7 @@ class _ChatBottomState extends State<ChatBottom> {
                       ],
                     ))
                 : Container(),
-            replying
-                ? Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  )
-                : Container(),
+            // 底部功能
             Container(
               color: messageBarColor,
               padding: const EdgeInsets.symmetric(
@@ -310,10 +305,33 @@ class _ChatBottomState extends State<ChatBottom> {
                 ],
               ),
             ),
+            // 可扩展区域
+            Column(children: [if (animate) const ChatBottomTool(), emoj()])
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 增加监听器监听聚焦操作
+    _focusNode.addListener(() {
+      print("-------------focusNode------------------");
+      if (_focusNode.hasFocus) {
+        print("TextField 获得焦点");
+        // 关闭emo和add
+        setState(() {
+          _emojiShowing = false;
+          animate = false;
+          _changeHeight = (_changeHeight == 0.0 ? 300.0 : 0.0); // 切换高度
+          print("_changeHeight: $_changeHeight");
+        });
+      } else {
+        print("TextField 失去焦点");
+      }
+    });
   }
 
   // 底部聊天输入框1
