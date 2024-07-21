@@ -21,10 +21,6 @@ class ChatDao implements BaseDao<Chat> {
           tbl.recipientId.equals(chatsCompanion.recipientId.value!)));
     // 获取查询结果
     final result = await query.get();
-    final all = await db.select(db.chats).get();
-    print(
-        "数据库聊天数据:recipientId = ${chatsCompanion.recipientId.value}  ${result.length}  all=${all.length}");
-    // 将查询结果转换为 UserData 的列表
     return result.toList();
   }
 
@@ -32,7 +28,7 @@ class ChatDao implements BaseDao<Chat> {
   Future<dynamic> insertChat(ChatsCompanion chatsCompanion) async {
     // 构建
     final result = await db.into(db.chats).insert(chatsCompanion);
-    print("插入结果: ${result}");
+    // print("插入结果: ${result}");
     return result;
   }
 
@@ -44,7 +40,7 @@ class ChatDao implements BaseDao<Chat> {
     await db.update(db.chats)
       ..where((tbl) => tbl.id.equals(chatsCompanion.id.value))
       ..write(chatsCompanion).then((value) {
-        print("update result: $value");
+        // print("update result: $value");
         result = value;
       });
 
@@ -60,7 +56,7 @@ class ChatDao implements BaseDao<Chat> {
     db.delete(db.users)
       ..where((tbl) => tbl.id.equals(chatsCompanion.id as int))
       ..go().then((value) {
-        print("delete data count: $value");
+        // print("delete data count: $value");
         result = value;
       });
 

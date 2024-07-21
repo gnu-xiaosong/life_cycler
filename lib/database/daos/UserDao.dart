@@ -20,6 +20,20 @@ class UserDao extends BaseDao with Console {
     return query;
   }
 
+  /*
+  根据deviceId获取user
+   */
+  Future<User> selectUserByDeviceId(String deviceId) async {
+    // 构建查询
+    final query = db.select(db.users)
+      ..where((tbl) => tbl.deviceId.equals(deviceId));
+
+    // 查询
+    List<User> result = (await query.get());
+
+    return result[0];
+  }
+
   // 获取用户，分页查询，按时间查询
   Future<List> selectUserByPage(int page, int pageNum) {
     /*

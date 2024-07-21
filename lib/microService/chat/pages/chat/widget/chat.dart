@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_template/database/daos/ChatDao.dart';
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/common/ChatAuthor.dart';
@@ -7,10 +9,10 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart' as Flutter;
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import '../../../model/AudioModel.dart';
 import '../../../model/ChatPageModel.dart';
+import '../../../model/CommonModel.dart';
 import '../../../websocket/schedule/MessageQueue.dart';
 import '../../../widget/ChatBottom.dart';
 import 'chatBubbleBuilder.dart';
-import 'package:motion_toast/motion_toast.dart';
 
 class chatView extends StatefulWidget {
   const chatView({super.key});
@@ -27,7 +29,7 @@ class _chatViewState extends State<chatView> {
   late final MessageQueue? _messageQueue;
   String? myDeviceId;
   ChatDao chatDao = ChatDao();
-
+  CommonModel commonModel = CommonModel();
   // user本机类
   ChatAuthor chatAuthor = ChatAuthor();
 
@@ -35,13 +37,21 @@ class _chatViewState extends State<chatView> {
   late AnimationController animControl;
   bool animate = false;
 
+  late StreamSubscription<Map<dynamic, dynamic>> _subscription;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // 获取页面传递过来的ddeviceId
-    String? deviceId = getDeviceId();
+    deviceId = commonModel.getDeviceId(context);
     // 设置用户消息队列监听
-    listenUserMessageQueue(deviceId!);
+    if (GlobalManager.userMapMsgQueue.containsKey(deviceId)) {
+      print("******************开始监听***************************");
+      print(deviceId);
+      // 在线才进行监听
+      listenUserMessageQueue(deviceId!);
+    }
+
     // 实例化逻辑类
     chatPageModel = ChatPageModel(addMessageCallback: (message) {
       // 新增消息时调用该函数
@@ -61,6 +71,14 @@ class _chatViewState extends State<chatView> {
     loadData();
   }
 
+  @override
+  dispose() {
+    // 取消订阅
+    if (GlobalManager.userMapMsgQueue.containsKey(deviceId))
+      _subscription.cancel();
+    super.dispose();
+  }
+
   /*
   加载聊天数据
    */
@@ -69,7 +87,7 @@ class _chatViewState extends State<chatView> {
     // 加载历史聊天数据
     setState(() {
       _messages = tmp_messages;
-      print("chat message history: $_messages");
+      // print("chat message history: $_messages");
     });
   }
 
@@ -99,65 +117,17 @@ class _chatViewState extends State<chatView> {
   }
 
   /*
-  获取页面传递过来的deviceId
-   */
-  getDeviceId() {
-    // 获取路由传递过来的roomId
-    try {
-      // 正常获取
-      deviceId = ModalRoute.of(context)!.settings.arguments.toString();
-      // 存储在缓存中
-      GlobalManager.appCache.setString("receiveDeviceId", deviceId!);
-
-      // 多层判断
-      if (GlobalManager.appCache.containsKey("receiveDeviceId")) {
-        deviceId ??= GlobalManager.appCache.getString("receiveDeviceId");
-      } else {
-        // 提示
-        MotionToast.error(
-                title: Text("Warning".tr()),
-                description: Text(
-                    "appCache not did containsKey is receiveDeviceId".tr()))
-            .show(context);
-      }
-    } catch (e) {
-      // 页面刷新获取
-      if (GlobalManager.appCache.containsKey("receiveDeviceId")) {
-        // 存在
-        deviceId = GlobalManager.appCache.getString("receiveDeviceId");
-      } else {
-        // 提示
-        MotionToast.error(
-                title: Text("Warning".tr()),
-                description: Text(
-                    "appCache not did containsKey is receiveDeviceId".tr()))
-            .show(context);
-      }
-    }
-
-    // 判断
-    if (deviceId == null) {
-      // 提示
-      MotionToast.error(
-              title: Text("System error".tr()),
-              description: Text("deviceId is empty!".tr()))
-          .show(context);
-    }
-    return deviceId;
-  }
-
-  /*
   监听user消息队列
    */
   listenUserMessageQueue(String deviceId) {
     // 设置msgQueue
     _messageQueue = GlobalManager.userMapMsgQueue[deviceId];
     // 打印deviceID
-    print(
-        "chat page: myDeviceId=${GlobalManager.deviceId}  receiveDeviceID=${deviceId}");
+    // print(
+    //     "chat page: myDeviceId=${GlobalManager.deviceId}  receiveDeviceID=${deviceId}");
     // 设置监听
-    _messageQueue?.stream?.listen((message) {
-      print("监听到消息队列变化,新增消息message: $message");
+    _subscription = _messageQueue!.stream!.listen((message) {
+      // print("监听到消息队列变化,新增消息message: $message");
       // 这里监听队列变化进行相应的执行操作
       /// 1. 封装接收方的message
       final addMessage = chatPageModel.messageInChat(message);
@@ -169,7 +139,7 @@ class _chatViewState extends State<chatView> {
       });
 
       // 打印deviceID
-      print("chat page: myDeviceId=${myDeviceId}  receiveDeviceID=${deviceId}");
+      // print("chat page: myDeviceId=${myDeviceId}  receiveDeviceID=${deviceId}");
     });
   }
 
@@ -180,8 +150,8 @@ class _chatViewState extends State<chatView> {
       print("Invalid index: $index");
       return;
     }
-    print("********************测试******************************");
-    print("message update: ${_messages}");
+    // print("********************测试******************************");
+    // print("message update: ${_messages}");
     _messages.insert(index, item);
   }
 

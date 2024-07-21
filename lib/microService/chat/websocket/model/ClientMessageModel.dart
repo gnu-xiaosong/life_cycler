@@ -16,6 +16,7 @@ import '../../../../database/daos/UserDao.dart';
 import '../../../../manager/GlobalManager.dart';
 import '../../../../manager/NotificationsManager.dart';
 import '../../model/AudioModel.dart';
+import '../../model/BroadcastModel.dart';
 import 'ClientModel.dart';
 import '../common/Console.dart';
 import '../common/MessageEncrypte.dart';
@@ -24,6 +25,8 @@ import '../common/UserChat.dart';
 class ClientMessageModel extends CommonModel with Console {
   MessageEncrypte messageEncrypte = MessageEncrypte();
   UserChat userChat = UserChat();
+  BroadcastModel broadcastModel = BroadcastModel();
+  CommonModel commonModel = CommonModel();
 
   // 音效类
   AudioModel audioModel = AudioModel();
@@ -54,7 +57,7 @@ class ClientMessageModel extends CommonModel with Console {
     // 3.将其存入缓存中
     List<String> commonList = commonDeviceIds.toList();
     GlobalManager.appCache.setStringList("inline_deviceId_list", commonList);
-    printSuccess("commonList: ${commonList}");
+    // printSuccess("commonList: ${commonList}");
     // 4.创建为每个clientObject对象，采用list存储
     for (String deviceId in commonList) {
       // 判断全局变量中是否存在该队列
@@ -63,6 +66,12 @@ class ClientMessageModel extends CommonModel with Console {
         GlobalManager.userMapMsgQueue[deviceId] = MessageQueue();
       }
     }
+    // 5.去除全局中已经掉线的item
+    commonModel.removeOfflineDevices(commonList);
+
+    // 6.广播响应更新UI
+    broadcastModel.broadcastInlineUser(commonList);
+
     printInfo("client chat user msg queue: ${GlobalManager.userMapMsgQueue}");
     printInfo("userMapMsgQueue count:${GlobalManager.userMapMsgQueue.length}");
   }
@@ -115,7 +124,7 @@ class ClientMessageModel extends CommonModel with Console {
             try {
               printInfo(
                   "-----%%%%--------------handling the response for add user by scan -------------%%%%%%%-------------");
-              print(messageQueue);
+              // print(messageQueue);
               // 添加进数据库  messageQueue
               userChat.addUserChat(
                   messageQueue["info"]["recipient"]["id"],

@@ -1,3 +1,4 @@
+import 'package:app_template/manager/GlobalManager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,7 @@ class _ChatBottomState extends State<ChatBottom> {
           _isText = text.isNotEmpty;
         });
         print(_isText);
-        print("text change: $text");
+        // print("text change: $text");
       },
       // prefixIcon:
       suffixIcon: Padding(
@@ -76,8 +77,11 @@ class _ChatBottomState extends State<ChatBottom> {
                       ),
                       onTap: () {
                         // 创建一个新的 PartialText 对象并设置其文本
-                        var message = types.PartialText(
-                            text: _textController.text.toString() ?? '');
+                        var message = types.PartialText(metadata: {
+                          "status": GlobalManager.isOnline
+                              ? types.Status.sent
+                              : types.Status.delivered,
+                        }, text: _textController.text.toString() ?? '');
                         // 发送消息
                         chatPageModel.handleSendPressed(message);
 

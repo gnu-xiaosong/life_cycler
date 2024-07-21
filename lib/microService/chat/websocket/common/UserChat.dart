@@ -18,7 +18,7 @@ class UserChat with Console {
   Future<List> selectAllUserDeviceIdChat() async {
     List<User> data = await userDao.selectAllUsers();
 
-    print("database all user: ${data}");
+    // print("database all user: ${data}");
     List<String> deviceIds = [];
     for (var user in data) {
       deviceIds.add(user.deviceId);

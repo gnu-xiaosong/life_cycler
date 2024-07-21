@@ -33,6 +33,7 @@ class MessageQueue {
 
   // 清空队列
   void clear() {
+    _controller.close();
     _queue.clear();
   }
 

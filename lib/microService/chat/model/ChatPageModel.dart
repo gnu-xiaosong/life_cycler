@@ -8,9 +8,11 @@ import 'package:app_template/manager/ToolsManager.dart';
 import 'package:app_template/microService/chat/common/ChatAuthor.dart';
 import 'package:app_template/microService/chat/common/ChatUser.dart';
 import 'package:drift/drift.dart' hide Column;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:motion_toast/motion_toast.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -50,7 +52,7 @@ class ChatPageModel extends ChatWebsocketClient {
    封装chat页面的message数据: 接收来自客户机的消息转Message
    */
   messageInChat(Map message) {
-    printSuccess("text translate Message: ${message}");
+    // printSuccess("text translate Message: ${message}");
     // 消息类型
     String msgType = message["msgType"];
     // 发送者, 客户机
@@ -67,10 +69,10 @@ class ChatPageModel extends ChatWebsocketClient {
       attachmentsList =
           jsonList.map((item) => item as Map<String, dynamic>).toList();
       // 打印结果
-      print("Attachments list: $attachmentsList");
+      // print("Attachments list: $attachmentsList");
     } else {
-      print(
-          "Unexpected type for attachments: ${message["content"]["attachments"].runtimeType}");
+      // print(
+      //     "Unexpected type for attachments: ${message["content"]["attachments"].runtimeType}");
       attachmentsList = [];
     }
 
@@ -94,7 +96,7 @@ class ChatPageModel extends ChatWebsocketClient {
   根据不同类型封装消息实体
    */
   types.Message? chatMessageByMsgType(ChatMessage chatMessage) {
-    print("chatMessage.type = ${chatMessage.type}");
+    // print("chatMessage.type = ${chatMessage.type}");
     late types.Message? _message;
     // 根据不同消息类型判断
     if (chatMessage.type == "text") {
@@ -175,7 +177,7 @@ class ChatPageModel extends ChatWebsocketClient {
       chatUser.firstName = chat.senderUsername; // 名
       final _user = chatUser.user();
       // 解耦附件列表，字符串结构
-      print(chat.contentAttachments.toString());
+      // print(chat.contentAttachments.toString());
 
       // 解码 JSON 字符串
       List<dynamic> jsonList = json.decode(chat.contentAttachments.toString());
@@ -240,21 +242,10 @@ class ChatPageModel extends ChatWebsocketClient {
   Future<void> addMessage(
     types.Message message,
   ) async {
-    print("-------------------------------------");
-    print(message.toJson()["text"]);
+    // print("-------------------------------------");
+    // print(message.toJson()["text"]);
 
-    // 添加进入数据库库
-    // ChatsCompanion chatsCompanion = ChatsCompanion.insert(
-    //     senderUsername: AppConfig.username,
-    //     msgType: message.type.toString(),
-    //     contentText: message.toJson()["text"],
-    //     timestamp: DateTime.fromMillisecondsSinceEpoch(message.createdAt!),
-    //     metadataMessageId: message.id,
-    //     metadataStatus: message.status.toString(),
-    //     isGroup: 0);
-    // chatDao.insertChat(chatsCompanion);
-
-    print("recipientId:${deviceId}");
+    // print("recipientId:${deviceId}");
     // 设置消息元
     Map metadata = {
       "messageId": message.id, // 消息的唯一标识符
@@ -440,6 +431,7 @@ class ChatPageModel extends ChatWebsocketClient {
   Future<void> handleSendPressed(types.PartialText message) async {
     // 创建文本消息
     final textMessage = types.TextMessage(
+      status: message.metadata?["status"],
       author: chatAuthor.user(), // 当前用户
       createdAt: DateTime.now().millisecondsSinceEpoch, // 当前时间戳
       id: const Uuid().v4(), // 生成唯一消息 ID
@@ -460,7 +452,8 @@ class ChatPageModel extends ChatWebsocketClient {
         metadata: {
           "messageId": textMessage.id,
           // 消息的唯一标识符
-          "status": "sent" // 消息状态，例如 sent, delivered, read
+          "status": justifyStatus(
+              message.metadata?["status"]) // 消息状态，例如 sent, delivered, read
         });
     // print("**********************插入数据库*****************************");
     // print(msgObj);
@@ -479,20 +472,51 @@ class ChatPageModel extends ChatWebsocketClient {
 
     // 本地deviceId
     String myselfDeviceId = GlobalManager.deviceId.toString();
-
-    print(
-        "userDeviceId=${deviceId.toString()}   myselfDeviceId=${myselfDeviceId}");
+    //
+    // print(
+    //     "userDeviceId=${deviceId.toString()}   myselfDeviceId=${myselfDeviceId}");
 
     // 从数据库中获取聊天信息
     List<Chat> chatMessagesList = await getUserChatMessagesByDeviceId(
         userDeviceId: deviceId.toString(), myselfDeviceId: myselfDeviceId);
 
     // 打印长字符串
-    ToolsManager().printLongString("chatMessagesList=${chatMessagesList}");
+    // ToolsManager().printLongString("chatMessagesList=${chatMessagesList}");
 
     // 将Chat实体list转化为Message对象list
     _messages = await chatToMessageTypeList(chatMessagesList);
 
     return _messages;
+  }
+
+  /*
+  判断消息状态用于封装进入数据库
+   */
+  justifyStatus(types.Status status) {
+    String? statusString;
+    switch (status) {
+      case types.Status.delivered:
+        // 已提交: 传达到了服务器
+        statusString = "delivered";
+        break;
+      case types.Status.error:
+        // 有误
+        statusString = "error";
+        break;
+      case types.Status.seen:
+        // 对方已查看
+        statusString = "seen";
+        break;
+      case types.Status.sending:
+        // 正在发送
+        statusString = "sending";
+        break;
+      case types.Status.sent:
+        // 已送达
+        statusString = "sent";
+        break;
+    }
+
+    return statusString;
   }
 }

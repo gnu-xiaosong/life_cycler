@@ -9,9 +9,6 @@ Widget chatBubbleBuilder(
   required message,
   required nextMessageInGroup,
 }) {
-  print("message:");
-  print(message);
-
   // 消息位置
   List msgPosition = messagePosition(message);
 
@@ -67,12 +64,8 @@ List messagePosition(types.Message message) {
   // 获取本地deviceId
 
   String deviceId = GlobalManager.deviceId.toString();
-  print("****************************************************************");
-  print("message test: deviceId=${deviceId}");
-  print(message);
   // 获取消息的deviceId
   String msgDeviceId = message.author.id;
-  print("message test: msgDeviceId=${msgDeviceId}");
 
   if (deviceId == msgDeviceId) {
     // 本机
