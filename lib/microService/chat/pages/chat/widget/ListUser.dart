@@ -200,6 +200,7 @@ class _ListUserState extends State<ListUser> {
                         ? "not message" // 离线
                         : message.text)
                     .toString()
+                    .replaceAll("\n", " ")
                     .tr(),
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(

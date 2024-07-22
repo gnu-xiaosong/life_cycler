@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:app_template/database/LocalStorage.dart';
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/model/BroadcastModel.dart';
+import 'package:app_template/microService/chat/pages/chat/widget/UserOnlineStatus.dart';
 import 'package:app_template/microService/chat/pages/chat/widget/chat.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,6 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  late StreamSubscription<dynamic> _subscription;
   UserDao userDao = UserDao();
   CommonModel commonModel = CommonModel();
   String? deviceId;
@@ -39,28 +39,6 @@ class _ChatPageState extends State<ChatPage> {
       // 全局
       GlobalManager.isOnline = isInline;
     });
-
-    // 订阅广播流: 判断用户在线状态
-    _subscription =
-        GlobalManager.globalStreamController.stream.listen((broadcastType) {
-      print("****************广播: online**********************");
-
-      if (broadcastType == BroadcastType.online) {
-        // 监听逻辑处理
-        setState(() {
-          isInline = GlobalManager.userMapMsgQueue.containsKey(deviceId);
-          // 全局
-          GlobalManager.isOnline = isInline;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    // 取消订阅
-    _subscription.cancel();
-    super.dispose();
   }
 
   @override
@@ -138,10 +116,8 @@ class _ChatPageState extends State<ChatPage> {
                         user.data!.username.toString().tr(),
                         style: const TextStyle(fontSize: 18),
                       ),
-                      Text(
-                        isInline ? "online".tr() : "offline".tr(),
-                        style: const TextStyle(fontSize: 10),
-                      ),
+                      // 在线状态
+                      UserOnlineStatus(deviceId)
                     ]),
                     //action（操作）right
                     actions: [
