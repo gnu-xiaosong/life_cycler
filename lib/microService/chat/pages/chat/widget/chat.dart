@@ -74,8 +74,9 @@ class _chatViewState extends State<chatView> {
   @override
   dispose() {
     // 取消订阅
-    if (GlobalManager.userMapMsgQueue.containsKey(deviceId))
+    if (GlobalManager.userMapMsgQueue.containsKey(deviceId)) {
       _subscription.cancel();
+    }
     super.dispose();
   }
 
@@ -135,7 +136,7 @@ class _chatViewState extends State<chatView> {
       /// 2. 添加数据
       setState(() {
         // add message
-        _messages.insert(0, addMessage); // 将新消息插入到列表的开头
+        insertMessage(0, addMessage); // 将新消息插入到列表的开头
       });
 
       // 打印deviceID

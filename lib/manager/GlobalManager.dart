@@ -57,10 +57,11 @@ class GlobalManager {
   static int taskTodoSecond = 0;
   // 11.全局deviceId
   static String? deviceId;
-  // 12. 全局监听变量: 创建一个广播流机制: 用于获取在线user处理
-  static final StreamController<List> streamController =
-      StreamController<List>.broadcast(); // 创建一个广播流控制
-  static Stream<List> get stream => streamController.stream; // 获取广播流
+  // 12. 全局监听广播流机制变量
+  static final StreamController<dynamic> globalStreamController =
+      StreamController<dynamic>.broadcast(); // 创建一个广播流控制
+  static Stream<dynamic> get globalStream =>
+      globalStreamController.stream; // 获取广播流
   // 13.在线状态
   static bool isOnline = false;
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/

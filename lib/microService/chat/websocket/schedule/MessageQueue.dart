@@ -33,7 +33,7 @@ class MessageQueue {
 
   // 清空队列
   void clear() {
-    _controller.close();
+    // _controller.close();
     _queue.clear();
   }
 
@@ -41,6 +41,15 @@ class MessageQueue {
   Map? peek() {
     if (_queue.isNotEmpty) {
       return _queue.first;
+    } else {
+      return null;
+    }
+  }
+
+  // 查看队尾消息
+  Map? last() {
+    if (_queue.isNotEmpty) {
+      return _queue.last;
     } else {
       return null;
     }

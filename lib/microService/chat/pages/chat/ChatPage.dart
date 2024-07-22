@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:app_template/database/LocalStorage.dart';
 import 'package:app_template/manager/GlobalManager.dart';
+import 'package:app_template/microService/chat/model/BroadcastModel.dart';
 import 'package:app_template/microService/chat/pages/chat/widget/chat.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 import '../../../../database/daos/UserDao.dart';
 import '../../../../widgets/dropdowns/DropdownButton1.dart';
+import '../../common/enum.dart';
 import '../../model/CommonModel.dart';
 
 class ChatPage extends StatefulWidget {
@@ -19,7 +21,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  late StreamSubscription<List> _subscription;
+  late StreamSubscription<dynamic> _subscription;
   UserDao userDao = UserDao();
   CommonModel commonModel = CommonModel();
   String? deviceId;
@@ -39,14 +41,18 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     // 订阅广播流: 判断用户在线状态
-    _subscription = GlobalManager.streamController.stream.listen((onlineList) {
-      print("online device: ${onlineList}");
-      // 监听逻辑处理
-      setState(() {
-        isInline = GlobalManager.userMapMsgQueue.containsKey(deviceId);
-        // 全局
-        GlobalManager.isOnline = isInline;
-      });
+    _subscription =
+        GlobalManager.globalStreamController.stream.listen((broadcastType) {
+      print("****************广播: online**********************");
+
+      if (broadcastType == BroadcastType.online) {
+        // 监听逻辑处理
+        setState(() {
+          isInline = GlobalManager.userMapMsgQueue.containsKey(deviceId);
+          // 全局
+          GlobalManager.isOnline = isInline;
+        });
+      }
     });
   }
 
@@ -63,6 +69,16 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   /*
+  手势返回
+   */
+  Future<bool> _onWillPop() async {
+    // 清空对应的消息队列: bug 在清空meesage会触发监控
+    GlobalManager.userMapMsgQueue[deviceId]?.clear();
+    BroadcastModel().globalBroadcast(BroadcastType.refresh);
+    return true;
+  }
+
+  /*
   获取user信息
    */
   Future<User> getUserInfo() async {
@@ -74,7 +90,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
-  Widget build(BuildContext context) => DefaultSheetController(
+  Widget build(BuildContext context) => WillPopScope(
+      onWillPop: _onWillPop,
+      child: DefaultSheetController(
         child: FutureBuilder(
           future: getUserInfo(),
           builder: (BuildContext context, AsyncSnapshot<User> user) {
@@ -106,6 +124,10 @@ class _ChatPageState extends State<ChatPage> {
                           iconSize: 20.sp,
                           icon: const Icon(Icons.arrow_back_ios),
                           onPressed: () {
+                            // 清空对应的消息队列: bug 在清空meesage会触发监控
+                            GlobalManager.userMapMsgQueue[deviceId]?.clear();
+                            BroadcastModel()
+                                .globalBroadcast(BroadcastType.refresh);
                             // 返回
                             Navigator.of(context).pop();
                           });
@@ -158,5 +180,5 @@ class _ChatPageState extends State<ChatPage> {
             }
           },
         ),
-      );
+      ));
 }

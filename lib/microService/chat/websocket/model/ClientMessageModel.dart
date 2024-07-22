@@ -15,6 +15,7 @@ import '../../../../database/daos/ChatDao.dart';
 import '../../../../database/daos/UserDao.dart';
 import '../../../../manager/GlobalManager.dart';
 import '../../../../manager/NotificationsManager.dart';
+import '../../common/enum.dart';
 import '../../model/AudioModel.dart';
 import '../../model/BroadcastModel.dart';
 import 'ClientModel.dart';
@@ -57,7 +58,7 @@ class ClientMessageModel extends CommonModel with Console {
     // 3.将其存入缓存中
     List<String> commonList = commonDeviceIds.toList();
     GlobalManager.appCache.setStringList("inline_deviceId_list", commonList);
-    // printSuccess("commonList: ${commonList}");
+
     // 4.创建为每个clientObject对象，采用list存储
     for (String deviceId in commonList) {
       // 判断全局变量中是否存在该队列
@@ -69,8 +70,8 @@ class ClientMessageModel extends CommonModel with Console {
     // 5.去除全局中已经掉线的item
     commonModel.removeOfflineDevices(commonList);
 
-    // 6.广播响应更新UI
-    broadcastModel.broadcastInlineUser(commonList);
+    // 6.广播: 请求在线用户数online、消息来临message
+    broadcastModel.globalBroadcast(BroadcastType.online);
 
     printInfo("client chat user msg queue: ${GlobalManager.userMapMsgQueue}");
     printInfo("userMapMsgQueue count:${GlobalManager.userMapMsgQueue.length}");
@@ -268,6 +269,9 @@ class ClientMessageModel extends CommonModel with Console {
     GlobalManager.userMapMsgQueue[deviceId]!.enqueue(msgObj);
 
     //****************************自定义业务逻辑*******************************************
+    // 广播: 消息来临
+    broadcastModel.globalBroadcast(BroadcastType.message);
+
     // 提示音效
     AudioModel audioModel = AudioModel();
     audioModel.playAudioEffect(Audios.message);

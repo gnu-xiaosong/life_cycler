@@ -48,7 +48,7 @@ dependencies:
   font_awesome_flutter: ^10.6.0
   flutter_login_template: ^1.1.0
   animations: ^2.0.11
-  flutter_svg: ^1.1.0
+  flutter_svg: ^2.0.10+1
   cupertino_icons: ^1.0.5
   animate_do: ^3.3.4
   material_dialogs: ^1.1.4
@@ -140,6 +140,9 @@ dependencies:
   just_audio: ^0.9.39
   just_audio_mpv: ^0.1.7
   just_audio_windows: ^0.2.1
+  user_profile_avatar: ^0.1.2
+  flutter_advanced_avatar: ^1.5.0
+
 
 
 

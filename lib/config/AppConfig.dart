@@ -34,7 +34,6 @@ import '../../widgets/tabViews/TabView2.dart';
 import '../../widgets/tabViews/TabView3.dart';
 import '../../widgets/tabViews/TabView4.dart';
 import '../../widgets/tabViews/MobileTabView1.dart';
-import '../widgets/BottomNavigationBars/animated_bottom_navigation_bar.dart';
 import '../widgets/BottomNavigationBars/bottom_bar_with_sheet.dart';
 import '../widgets/BottomNavigationBars/custom_bottom_bar.dart';
 import '../widgets/BottomNavigationBars/floating_bottom_navigation_bar.dart';
@@ -172,7 +171,6 @@ class AppConfig extends ToolsManager {
     curved_navigation_bar,
     bottom_navigation_bar_1,
     bottom_bar_with_sheet,
-    animated_bottom_navigation_bar,
     floating_bottom_navigation_bar
   ];
   //当前底部导航栏的索引
