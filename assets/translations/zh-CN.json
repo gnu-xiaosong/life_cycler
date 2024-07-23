@@ -97,5 +97,9 @@
   "s": "秒",
   "online": "在线",
   "offline": "离线",
-  "not message": "无消息"
+  "not message": "无消息",
+  "copy": "复制",
+  "selectAll": "全选",
+  "search": "搜索",
+  "copy successful": "复制成功"
 }

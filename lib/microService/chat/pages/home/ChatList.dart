@@ -82,7 +82,7 @@ class _ChatListState extends State<ChatList> {
             ),
           ),
         ),
-        body: ListUser());
+        body: Container(child: ListUser()));
   }
 
   void showMenu() {
