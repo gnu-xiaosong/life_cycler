@@ -8,21 +8,20 @@ import 'package:app_template/microService/chat/websocket/common/secret.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
 import '../../../../manager/GlobalManager.dart';
-import '../model/ClientObject.dart';
-import 'Console.dart';
-import 'MessageEncrypte.dart';
-import 'OffLineHandler.dart';
-import 'WaitAgreeUserAddClientHandler.dart';
+import 'ClientObject.dart';
+import '../common/Console.dart';
+import '../common/MessageEncrypte.dart';
+import '../schedule/OffLineHandler.dart';
+import '../schedule/WaitAgreeUserAddClientHandler.dart';
 
 class ServerMessageModel with Console {
-  Map? msgDataTypeMap;
   Tool tool = Tool();
   MessageEncrypte messageEncrypte = MessageEncrypte();
 
   /*
     客户端请求局域网内服务端server的请求
    */
-  void scan(HttpRequest request, WebSocket webSocket) {
+  void scan(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 获取客户端 IP 和端口
     var clientIp = request.connectionInfo?.remoteAddress.address;
     var clientPort = request.connectionInfo?.remotePort;
@@ -46,7 +45,7 @@ class ServerMessageModel with Console {
   /*
     客户端client 第一次请求认证服务端server
    */
-  void auth(HttpRequest request, WebSocket webSocket) {
+  void auth(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 获取客户端 IP 和端口
     var clientIp = request.connectionInfo?.remoteAddress.address;
     var clientPort = request.connectionInfo?.remotePort;
@@ -73,6 +72,11 @@ class ServerMessageModel with Console {
         port: clientPort!.toInt(),
       );
 
+      // 先剔除全局list中相同deviceID的client对象
+      GlobalManager.webscoketClientObjectList = GlobalManager
+          .webscoketClientObjectList
+          .where((clientItem) => clientItem.deviceId != client.deviceId)
+          .toList();
       // 添加进list中
       GlobalManager.webscoketClientObjectList.add(client);
 
@@ -117,24 +121,23 @@ class ServerMessageModel with Console {
   /*
     消息类型
    */
-  void message(HttpRequest request, WebSocket webSocket) {
+  void message(HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     // 1.客户端身份验证: deviceId为发送者的设备id
     bool secret_auth = tool.clientAuth(
         msgDataTypeMap?["info"]["sender"]["id"], request, webSocket);
 
     printWarn("MESSAGE: $msgDataTypeMap");
     if (secret_auth) {
-      //// 判断client是否为server端，分别进行处理
-      //******************start:处理client端为server时逻辑**********************
-
-      //******************start:处理client端为server时逻辑**********************
       // 2.如果认证成功，将该消息添加进client的消息队列中
-      GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
+      print("ip: ${request.connectionInfo?.remoteAddress.address}");
+      print("length:${GlobalManager.webscoketClientObjectList.length}");
+      GlobalManager.webscoketClientObjectList =
+          GlobalManager.webscoketClientObjectList.map((websocketClientObj) {
+        // print("weboscket: ${websocketClientObj.ip}");
         if (websocketClientObj.socket == webSocket ||
             request.connectionInfo?.remoteAddress.address ==
                 websocketClientObj.ip) {
-          printInfo(
-              "----------------中断处理：找到了目标websocket------------------------");
+          printInfo("----------------中断处理：找到了目标websocket----------------");
           // 算法加密
           msgDataTypeMap?["info"] = messageEncrypte.encodeMessage(
               websocketClientObj.secret, msgDataTypeMap?["info"]);
@@ -146,7 +149,7 @@ class ServerMessageModel with Console {
           // 返回原来的
           return websocketClientObj;
         }
-      });
+      }).toList();
     } else {
       // 3.1 认证失败返回数据相应给客户端
       Map re = {
@@ -180,10 +183,11 @@ class ServerMessageModel with Console {
     }
   }
 
-/*
-   请求server在线client用户
+  /*
+   广播server端在线client用户
    */
-  void requestInlineClient(HttpRequest request, WebSocket webSocket) {
+  void handleRequestInlineClients(
+      HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) {
     String deviceId = msgDataTypeMap?["info"]["deviceId"];
     // 1.客户端身份验证
     bool _auth = tool.clientAuth(deviceId, request, webSocket);
@@ -234,7 +238,7 @@ class ServerMessageModel with Console {
    用于扫码添加好友
    */
   Future<void> responseScanAddUser(
-      HttpRequest request, WebSocket webSocket) async {
+      HttpRequest request, WebSocket webSocket, Map msgDataTypeMap) async {
     // 接收方deviceId
     String recive_deviceId = msgDataTypeMap?["info"]["recipient"]["id"] ?? "";
     // 发送者
@@ -270,10 +274,11 @@ class ServerMessageModel with Console {
       printSuccess("msg alreaded to the AgreeUserAddQueue!");
     } else {
       //***************************待测试需要找第三个设备******************
+      print("对方在线");
       // 在线直接发起add user请求
       /// 2.加密数据
       send_data?["info"] = MessageEncrypte()
-          .encodeMessage(receive_clientObject!.secret, send_data?["info"]);
+          .encodeMessage(receive_clientObject.secret, send_data["info"]);
 
       /// 3.发送
       try {
@@ -290,31 +295,34 @@ class ServerMessageModel with Console {
    广播在线client用户
    */
   void broadcastInlineClients() {
+    printSuccess("**************Broadcast Inline Clients*********************");
     // 获取在线的clientObject
     List deviceIdList = [];
 
     // 遍历clientObject
-    GlobalManager.webscoketClientObjectList.forEach((clientObject) {
+    for (var clientObject in GlobalManager.webscoketClientObjectList) {
       if (clientObject.connected && clientObject.status == 1) {
         deviceIdList.add(clientObject.deviceId.toString());
       }
-    });
+    }
 
     // 数据封装
     Map msg = {
       "type": "BROADCAST_INLINE_CLIENT",
       "info": {"type": "list", "deviceIds": deviceIdList}
     };
+
+    printInfo("inline Clients: ${msg}");
     // 广播发送
-    GlobalManager.webscoketClientObjectList.forEach((clientObject) {
+    for (var clientObject in GlobalManager.webscoketClientObjectList) {
       // 判断能够发送的client
       if (clientObject.connected && clientObject.status == 1) {
-        // 数据加密
-        msg["info"] =
-            messageEncrypte.encodeMessage(clientObject.secret, msg["info"]);
+        // 数据加密: 暂时不加密，因为有bug
+        // msg["info"] =
+        //     messageEncrypte.encodeMessage(clientObject.secret, msg["info"]);
         // 发送
         clientObject.socket.add(json.encode(msg));
       }
-    });
+    }
   }
 }

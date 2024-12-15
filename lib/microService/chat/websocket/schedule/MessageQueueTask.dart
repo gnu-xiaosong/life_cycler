@@ -7,9 +7,8 @@ import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/MessageEncrypte.dart';
 import 'package:app_template/microService/chat/websocket/common/tools.dart';
 import '../common/Console.dart';
-import '../common/OffLineHandler.dart';
+import 'OffLineHandler.dart';
 import '../model/ClientObject.dart';
-import 'Bus.dart';
 
 class MessageQueueTask with Console {
   // 私有构造函数
@@ -59,7 +58,7 @@ class MessageQueueTask with Console {
           index++; // 增加 index 避免死循环
           continue;
         }
-        //*******************正式开始发送消息给目标客户端: append消息进入总消息队列中*****************************
+        //*******************正式开始发送消息给目标客户端策略：在线直接发送，不在线append离线消息队列中*****************************
         // 1. 获取消息对象: 这里必须要修改调GlobalManager.webscoketClientObjectList[index]的消息队列
         Map? msg_map = GlobalManager
             .webscoketClientObjectList[index].messageQueue
@@ -68,6 +67,7 @@ class MessageQueueTask with Console {
         // 解密消息
         msg_map!["info"] = MessageEncrypte()
             .decodeMessage(clientObject.secret, msg_map["info"]);
+        printSuccess("解密消息: $msg_map");
         // 2.获取接受者的deviceId
         String receive_deviceId = msg_map["info"]["recipient"]["id"];
 
@@ -81,6 +81,7 @@ class MessageQueueTask with Console {
             printInfo("data=$msg_map  进入离线消息队列successful!");
           }
         } else {
+          // client在线直接发送消息给receiveClient
           if (receive_clientObject.status == 1) {
             // 4.加密消息
             msg_map["info"] = MessageEncrypte()
@@ -88,6 +89,7 @@ class MessageQueueTask with Console {
             // 5.发送
             try {
               receive_clientObject.socket.add(json.encode(msg_map));
+              printInfo("发送给接受方成功!");
             } catch (e) {
               printCatch(
                   "MESSAGE: send to ${receive_clientObject.ip}:${receive_clientObject.port} deviceId=${receive_clientObject.deviceId} is failure!");

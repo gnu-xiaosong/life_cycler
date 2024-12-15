@@ -56,7 +56,8 @@ class _AdaptiveBootState extends State<AdaptiveBoot> {
               // onUnknownRoute:,
               //是否显示调试标
               debugShowCheckedModeBanner: !GlobalManager.isRelease,
-              builder: EasyLoading.init(), // 1.toast初始化
+              builder: EasyLoading.init(),
+              // builder: , // 1.toast初始化
             ));
   }
 }

@@ -1,14 +1,10 @@
-import 'package:app_template/database/LocalStorage.dart';
-import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/widget/menu.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:popup_menu_plus/popup_menu_plus.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../../../../config/AppConfig.dart';
-import '../../../../database/daos/UserDao.dart';
-import 'package:random_avatar/random_avatar.dart';
+import '../../../../manager/GlobalManager.dart';
+import '../chat/widget/ListUser.dart';
 
 class ChatList extends StatefulWidget {
   const ChatList({super.key});
@@ -18,35 +14,14 @@ class ChatList extends StatefulWidget {
 }
 
 class _ChatListState extends State<ChatList> {
-  _ChatListState() {
-    userList = [];
-  }
-  UserDao userDao = UserDao();
+  _ChatListState() {}
   GlobalKey btnKeyMenu = GlobalKey();
-  PopupMenu? menu;
-  int page = 1; //页码
-  int pageNum = 10; // 每页数量
-  late List userList;
-  late final controller = SlidableController(this as TickerProvider);
-  //获取控制器
-  RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
 
   @override
   void initState() {
     super.initState();
-
     // 加载websocket
     GlobalManager().GlobalChatWebsocket.bootWebsocket();
-    // 加载数据
-    userDao.selectUserByPage(page, pageNum).then((value) {
-      print("------------用户分页显示: page=$page pageNum=$pageNum-----------");
-      // 页面重构渲染数据
-      setState(() {
-        userList = value;
-      });
-      print(userList);
-    });
   }
 
   @override
@@ -107,81 +82,7 @@ class _ChatListState extends State<ChatList> {
             ),
           ),
         ),
-        body: listUser());
-  }
-
-  Widget listUser() {
-    return ListView.builder(
-      itemCount: userList.length,
-      itemBuilder: (context, index) {
-        User item = userList[index];
-        return Slidable(
-          key: ValueKey(item),
-          startActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            dismissible: DismissiblePane(onDismissed: () {}),
-            children: [
-              SlidableAction(
-                onPressed: doNothing,
-                backgroundColor: Color(0xFFFE4A49),
-                foregroundColor: Colors.white,
-                icon: Icons.delete,
-                label: 'Delete',
-              ),
-              SlidableAction(
-                onPressed: doNothing,
-                backgroundColor: Color(0xFF21B7CA),
-                foregroundColor: Colors.white,
-                icon: Icons.share,
-                label: 'Share',
-              ),
-            ],
-          ),
-          endActionPane: ActionPane(
-            motion: const ScrollMotion(),
-            children: [
-              SlidableAction(
-                flex: 2,
-                onPressed: (_) => controller.openEndActionPane(),
-                backgroundColor: const Color(0xFF7BC043),
-                foregroundColor: Colors.white,
-                icon: Icons.archive,
-                label: 'Archive',
-              ),
-              SlidableAction(
-                onPressed: (_) => controller.close(),
-                backgroundColor: const Color(0xFF0392CF),
-                foregroundColor: Colors.white,
-                icon: Icons.save,
-                label: 'Save',
-              ),
-            ],
-          ),
-          child: ListTile(
-            onTap: () {
-              // 点击跳转
-              Navigator.pushNamed(context, 'chatPage',
-                  arguments: item.deviceId.toString());
-            },
-            leading: randomAvatar('saytoonz', height: 50, width: 50),
-            subtitle: Text(item.createdAt),
-            trailing: Text(item.id.toString()),
-            title: Text(item.username),
-          ),
-        );
-      },
-    );
-  }
-
-  void doNothing(BuildContext context) {}
-
-  void onClickMenu(PopUpMenuItemProvider item) {
-    for (var menu in topMenus()) {
-      if (menu["menu"] == item) {
-        menu["click"](context);
-      }
-    }
-    print('Click menu -> ${item.menuTitle}');
+        body: Container(child: ListUser()));
   }
 
   void showMenu() {
@@ -198,5 +99,14 @@ class _ChatListState extends State<ChatList> {
       onDismiss: onDismiss,
     );
     menu.show(widgetKey: btnKeyMenu);
+  }
+
+  void onClickMenu(PopUpMenuItemProvider item) {
+    for (var menu in topMenus()) {
+      if (menu["menu"] == item) {
+        menu["click"](context);
+      }
+    }
+    print('Click menu -> ${item.menuTitle}');
   }
 }

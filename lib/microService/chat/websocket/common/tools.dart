@@ -47,7 +47,7 @@ class Tool with Console {
   ClientObject? getClientObjectByDeviceId(String deviceId) {
     // 遍历list
     for (ClientObject clientObject in GlobalManager.webscoketClientObjectList) {
-      print(clientObject.deviceId);
+      // print(clientObject.deviceId);
       if (clientObject.deviceId == deviceId) return clientObject;
     }
     return null;
@@ -114,4 +114,20 @@ class Tool with Console {
 
     return clientObject;
   }
+
+  // /*
+  // 当server端启动时，自动添加一个server的clientObject进入全局websocketClientObjectList
+  //  */
+  // initialAddServerClientObject(WebSocket socket) {
+  //   String deviceId = GlobalManager.deviceId.toString();
+  //   ClientObject client = ClientObject(
+  //     deviceId: deviceId,
+  //     socket: socket, // 默认空
+  //     ip: "127.0.0.1",
+  //     secret: "",
+  //     port: AppConfig.port,
+  //   );
+  //   // 添加进list中
+  //   GlobalManager.webscoketClientObjectList.add(client);
+  // }
 }

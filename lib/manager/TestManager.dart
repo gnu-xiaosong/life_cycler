@@ -5,10 +5,10 @@
  * @LastEditTime: 2023-12-29 13:40:14
  * @Description: 测试工具类
  */
+import 'package:app_template/database/daos/TaskDao.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
-
 import '../database/LocalStorage.dart';
 import '../database/daos/UserDao.dart';
 import '../microService/chat/websocket/common/unique_device_id.dart';
@@ -18,7 +18,7 @@ class TestManager with Console {
   static void debug() {
     print("------------------debug task test-----------");
     // 调试ADO
-    testADO();
+    // testADO();
   }
 
   //http返回数据打印输出
@@ -67,6 +67,12 @@ class TestManager with Console {
       );
 
       await userDao.insertUser(usersCompanion);
+
+      // 查询
+      TaskDao taskDao = TaskDao();
+      List taskAll = await taskDao.selectAllTasks();
+      print("all tasks:${taskAll}");
+      print("task count: ${taskAll.length}");
     } catch (e, stacktrace) {
       print("插入数据库, more detail : $e");
       print("Stacktrace: $stacktrace");

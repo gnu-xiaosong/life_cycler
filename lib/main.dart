@@ -1,6 +1,7 @@
 // import 'package:app_template/boot/WindowsBoot.dart';
 import 'package:app_template/config/AppConfig.dart';
 import 'package:app_template/database/LocalStorage.dart';
+import 'package:app_template/states/TaskState.dart';
 import 'package:app_template/states/DarkState.dart';
 import 'package:app_template/states/DescState.dart';
 import 'package:app_template/states/OtherState.dart';
@@ -92,7 +93,9 @@ class _AppState extends State<App> {
           //全局暗夜模式
           ChangeNotifierProvider<DarkState>(create: (_) => DarkState()),
           //其他控制状态
-          ChangeNotifierProvider<OtherState>(create: (_) => OtherState())
+          ChangeNotifierProvider<OtherState>(create: (_) => OtherState()),
+          //控制addTask状态
+          ChangeNotifierProvider<TaskState>(create: (_) => TaskState())
         ],
         child: RefreshConfiguration(
             //----------------- 下拉刷新全局配置-------------------

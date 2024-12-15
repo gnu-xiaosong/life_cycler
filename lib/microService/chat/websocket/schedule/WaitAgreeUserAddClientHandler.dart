@@ -3,7 +3,7 @@
  */
 import 'package:app_template/manager/GlobalManager.dart';
 import 'package:app_template/microService/chat/websocket/common/Console.dart';
-import 'package:app_template/microService/chat/websocket/common/OffLineHandler.dart';
+import 'package:app_template/microService/chat/websocket/schedule/OffLineHandler.dart';
 
 class WaitAgreeUserAddClientHandler with Console {
   // 等待好友申请消息队列开关:

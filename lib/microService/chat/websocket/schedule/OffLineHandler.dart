@@ -87,10 +87,10 @@ class OffLine with Console {
 
       String receive_deviceId = de_map?["recipient"]["id"];
 
+      // client为非server端
       /// (2) 根据device获取clientObject对象
       ClientObject? receive_clientObject =
           Tool().getClientObjectByDeviceId(receive_deviceId);
-
       if (receive_clientObject == null) {
         // 如果接受者仍然不在线则将该消息重新添加进队列中
         GlobalManager.offLineMessageQueue.enqueue(msg);
@@ -111,6 +111,7 @@ class OffLine with Console {
         }
       }
     }
+
     if (length == 0) {
       printInfo(" 离线消息队列为空!");
     }

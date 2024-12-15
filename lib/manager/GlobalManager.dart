@@ -5,18 +5,20 @@
  * @LastEditTime: 2023-12-29 13:40:14
  * @Description: 全局管理器工具类
  */
+import 'dart:async';
 import 'dart:convert';
-import 'package:app_template/microService/chat/websocket/model/MessageQueue.dart';
+import 'package:app_template/microService/chat/websocket/common/unique_device_id.dart';
+import 'package:app_template/microService/chat/websocket/schedule/MessageQueue.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' as types;
 import 'package:shared_preferences/shared_preferences.dart';
 
 //应用配置信息
-import '../database/LocalStorage.dart';
+import '../database/LocalStorage.dart' hide Task;
 import '../microService/chat/websocket/Client.dart';
 import '../microService/chat/websocket/model/ClientObject.dart';
-import '../microService/chat/websocket/model/OffLineMessageQueue.dart';
+import '../microService/chat/websocket/schedule/OffLineMessageQueue.dart';
 import '../microService/chat/websocket/schedule/UserSchedule.dart';
+import '../microService/taskSchedule/common/Task.dart';
 import '../models/index.dart';
 //HttpManager管理工具类
 //本地通知管理
@@ -48,11 +50,20 @@ class GlobalManager {
   static late BuildContext context;
   // 8.全局add user消息队列
   static MessageQueue offerUserAddQueue = MessageQueue();
-  // 9.全局聊天消息存储
-  static List<types.Message> GloablMessageList = [];
-  // 10.全局chatWebsocketClient
+  // 9.全局chatWebsocketClient
   static ChatWebsocketClient? chatWebsocketClient;
-
+  // 10. task全局变量
+  static TaskModel task = TaskModel();
+  static int taskTodoSecond = 0;
+  // 11.全局deviceId
+  static String? deviceId;
+  // 12. 全局监听广播流机制变量
+  static final StreamController<dynamic> globalStreamController =
+      StreamController<dynamic>.broadcast(); // 创建一个广播流控制
+  static Stream<dynamic> get globalStream =>
+      globalStreamController.stream; // 获取广播流
+  // 13.在线状态
+  static bool isOnline = false;
   /**************↑↑↑↑↑↑↑↑全局参数变量初始化操作↑↑↑↑↑↑↑↑***************/
 
   /****************↓↓↓↓↓↓工具类初始化操作↓↓↓↓↓↓↓**********************/
@@ -91,9 +102,6 @@ class GlobalManager {
     // 调试管理器模块
     TestManager.debug();
 
-    // 设置deviceId
-    // String deviceId = await UniqueDeviceId.getDeviceUuid();
-    // appCache.setString("deviceId", deviceId);
     // 监测app是否初次启动
     final prefs = await SharedPreferences.getInstance();
     final isFirstRun = prefs.getBool('isFirstRun') ?? true;
@@ -102,6 +110,9 @@ class GlobalManager {
       appFirstRun();
       prefs.setBool('isFirstRun', false);
     }
+
+    // 设置全局deviceId
+    deviceId = await UniqueDeviceId.getDeviceUuid();
 
     // -------------------管理类初始化--------------------
     //1.本地通知初始化(单例模式)
